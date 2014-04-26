@@ -115,3 +115,14 @@ func ParallelRun(config map[string]interface{}, host_arr []string, tmpdir string
     }
     return nil
 }
+func Interact(config map[string]interface{}, host string) {
+    user, _ := config["User"].(string)
+    pwd, _ := config["Password"].(string)
+    keyfile, _ := config["Keyfile"].(string)
+    cmd, _ := config["Cmd"].(string)
+    printer, _ := config["Output"].(io.Writer)
+
+    mgr, _ := job.NewManager()
+    s3h := sssh.NewS3h(host, user, pwd, keyfile, cmd, printer, mgr)
+    s3h.Login()
+}

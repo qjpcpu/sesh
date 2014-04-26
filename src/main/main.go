@@ -1,6 +1,7 @@
 package main
 
 import (
+    "bufio"
     "flag"
     "fmt"
     "io/ioutil"
@@ -21,6 +22,7 @@ func showHelp() {
     -c CMD_FILE, Command file.
     -t TMP_DIRECTORY, Specify tmp directory.
     -parallel, Parallel execution.
+    -check, pause after first host done.
     -help See help`
     fmt.Println(body)
 
@@ -35,6 +37,7 @@ func main() {
     cmdfile := flag.String("c", "", "CMD_FILE, Command file.")
     tmpdir := flag.String("t", ".", "TMP_DIRECTORY, Specify tmp directory.")
     parallel := flag.Bool("parallel", false, "Parallel execution.")
+    pause := flag.Bool("check", false, "Pause after first host done.")
     help := flag.Bool("help", false, "See help.")
     flag.Parse()
 
@@ -134,10 +137,24 @@ func main() {
         "Output":   printer,
     }
 
+    if *pause {
+        if *parallel {
+            util.ParallelRun(config, host_arr[0:1], *tmpdir)
+        } else {
+            util.SerialRun(config, host_arr[0:1])
+        }
+        fmt.Printf("The task on \033[33m%s\033[0m has done.\nPress any key to auto login \033[33m%s\033[0m to have a check...", host_arr[0], host_arr[0])
+        reader := bufio.NewReader(os.Stdin)
+        reader.ReadString('\n')
+        util.Interact(config, host_arr[0])
+        fmt.Println("\n\033[32mCheck completed! Press any key to acomplish the left tasks.\033[0m")
+        reader = bufio.NewReader(os.Stdin)
+        reader.ReadString('\n')
+    }
     if *parallel {
-        util.ParallelRun(config, host_arr, *tmpdir)
+        util.ParallelRun(config, host_arr[1:len(host_arr)], *tmpdir)
     } else {
-        util.SerialRun(config, host_arr)
+        util.SerialRun(config, host_arr[1:len(host_arr)])
     }
 
     fmt.Println("\033[32mFinished!\033[0m")
