@@ -5,11 +5,13 @@ import (
     "fmt"
     "io"
     "io/ioutil"
+    "job"
     "os"
     "sssh"
     "time"
 )
 
+// Get configurations form $HOME/.seshrc
 type s3hrc struct {
     User    string
     Keyfile string
@@ -34,10 +36,10 @@ func Gets3hrc() (conf map[string]string, err error) {
         return conf, err
     }
 }
-func report(s3h *sssh.Sssh, host string, data interface{}) {
-    if v, ok := data.(string); ok && v == "BEGIN" {
-        s3h.Output.Write([]byte(fmt.Sprintf("\033[33m========== %s ==========\033[0m\n", host)))
-    }
+
+// Hook for per task state changed
+func report(output io.Writer, host string) {
+    output.Write([]byte(fmt.Sprintf("\033[33m========== %s ==========\033[0m\n", host)))
 }
 func SerialRun(config map[string]interface{}, host_arr []string) error {
     user, _ := config["User"].(string)
@@ -46,18 +48,19 @@ func SerialRun(config map[string]interface{}, host_arr []string) error {
     cmd, _ := config["Cmd"].(string)
     printer, _ := config["Output"].(io.Writer)
 
-    s3h := &sssh.Sssh{
-        User:         user,
-        Password:     pwd,
-        Keyfile:      keyfile,
-        Cmd:          cmd,
-        Output:       printer,
-        StateChanged: report,
-    }
-    size := len(host_arr)
-    queue := make(chan map[string]string, size)
+    mgr, _ := job.NewManager()
+
     for _, h := range host_arr {
-        s3h.Work(h, queue)
+        s3h := sssh.NewS3h(h, user, pwd, keyfile, cmd, printer, mgr)
+        go func() {
+            if _, err := mgr.Receive(-1); err == nil {
+                report(s3h.Output, s3h.Host)
+                mgr.Send(s3h.Host, map[string]interface{}{"FROM": "MASTER", "BODY": "CONTINUE"})
+            } else {
+                mgr.Send(s3h.Host, map[string]interface{}{"FROM": "MASTER", "BODY": "STOP"})
+            }
+        }()
+        s3h.Work()
     }
     return nil
 }
@@ -68,37 +71,34 @@ func ParallelRun(config map[string]interface{}, host_arr []string, tmpdir string
     cmd, _ := config["Cmd"].(string)
     printer, _ := config["Output"].(io.Writer)
 
-    size := len(host_arr)
-    queue := make(chan map[string]string, size)
-
+    // Create master
+    mgr, _ := job.NewManager()
+    // Setup tmp directory for tmp files
     dir := fmt.Sprintf("%s/.s3h.%d", tmpdir, time.Now().Second())
     if err := os.Mkdir(dir, os.ModeDir|os.ModePerm); err != nil {
         return err
     }
+    defer os.RemoveAll(dir)
+
     var tmpfiles []*os.File
     for _, h := range host_arr {
         file, _ := os.Create(fmt.Sprintf("%s/%s", dir, h))
         tmpfiles = append(tmpfiles, file)
-        s3h := &sssh.Sssh{
-            User:         user,
-            Password:     pwd,
-            Keyfile:      keyfile,
-            Cmd:          cmd,
-            Output:       file,
-            StateChanged: report,
-        }
-        go s3h.Work(h, queue)
+        s3h := sssh.NewS3h(h, user, pwd, keyfile, cmd, file, mgr)
+        go s3h.Work()
     }
 
-Loop:
+    size := len(host_arr)
     for {
-        select {
-        case msg := <-queue:
-            if msg["BODY"] == "END" {
-                size -= 1
-            }
+        data, _ := mgr.Receive(-1)
+        info, _ := data.(map[string]interface{})
+        if info["BODY"].(string) == "BEGIN" {
+            report(info["TAG"].(*sssh.Sssh).Output, info["TAG"].(*sssh.Sssh).Host)
+            mgr.Send(info["FROM"].(string), map[string]interface{}{"FROM": "MASTER", "BODY": "CONTINUE"})
+        } else if info["BODY"].(string) == "END" {
+            size -= 1
             if size == 0 {
-                break Loop
+                break
             }
         }
     }
@@ -113,6 +113,5 @@ Loop:
         src.Close()
         os.Remove(fn)
     }
-    os.Remove(dir)
     return nil
 }
