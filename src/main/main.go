@@ -101,7 +101,7 @@ func main() {
             fmt.Println("\033[31mCommand file " + *cmdfile + " not found!\033[0m")
             return
         }
-        if buf, err := ioutil.ReadFile(*cmdfile); err != nil {
+        if buf, err := ioutil.ReadFile(*cmdfile); err == nil {
             cmd = string(buf)
         }
         if cmd == "" {
@@ -112,7 +112,6 @@ func main() {
             cmd = cmd + v + " "
         }
     }
-
     if _, err := os.Stat(*tmpdir); os.IsNotExist(err) && *parallel {
         fmt.Println("\033[31mTemporary directory " + *tmpdir + " is not exist!\033[0m")
         return
@@ -136,7 +135,7 @@ func main() {
         "Cmd":      cmd,
         "Output":   printer,
     }
-
+    host_offset := 0
     if *pause {
         if *parallel {
             util.ParallelRun(config, host_arr[0:1], *tmpdir)
@@ -147,14 +146,15 @@ func main() {
         reader := bufio.NewReader(os.Stdin)
         reader.ReadString('\n')
         util.Interact(config, host_arr[0])
-        fmt.Println("\n\033[32mCheck completed! Press any key to acomplish the left tasks.\033[0m")
+        fmt.Printf("\n\033[32mCheck completed! Press any key to acomplish the left tasks.\033[0m")
         reader = bufio.NewReader(os.Stdin)
         reader.ReadString('\n')
+        host_offset = 1
     }
     if *parallel {
-        util.ParallelRun(config, host_arr[1:len(host_arr)], *tmpdir)
+        util.ParallelRun(config, host_arr[host_offset:len(host_arr)], *tmpdir)
     } else {
-        util.SerialRun(config, host_arr[1:len(host_arr)])
+        util.SerialRun(config, host_arr[host_offset:len(host_arr)])
     }
 
     fmt.Println("\033[32mFinished!\033[0m")
