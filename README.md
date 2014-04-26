@@ -77,6 +77,7 @@ If you want execute many commands on remote host, you would find it's hard to us
 user=`whoami`
 pstree $user|grep -vE '^ |^$'|awk -F "---" '{print $1}'
 ```
+
 Use `-c` to specity command file:
 
 	sesh -f host-list -c get-user-process.cmd
