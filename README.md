@@ -71,12 +71,10 @@ If you want have a check after the first host's job done, you can use `-check`, 
 	
 #### Execute script
 
-If you want execute many commands on remote host, you would find it's hard to use `ssh` command to accomplish that, so you can put these comands into a file, for example:
+If you want execute many commands on remote host, you would find it's hard to use `ssh` command to accomplish that, so you can put these comands into a file, for example `get-user-process.cmd`:
 
-```bash get-user-process.cmd
-user=`whoami`
-pstree $user|grep -vE '^ |^$'|awk -F "---" '{print $1}'
-```
+	user=`whoami`
+	pstree $user|grep -vE '^ |^$'|awk -F "---" '{print $1}'
 
 Use `-c` to specity command file:
 
