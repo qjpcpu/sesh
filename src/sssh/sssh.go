@@ -10,7 +10,6 @@ import (
     "log"
     "os"
     "os/signal"
-    "syscall"
 )
 
 type Sssh struct {
@@ -136,30 +135,25 @@ func (s3h *Sssh) Login() {
     }
 
     c := make(chan os.Signal, 1)
-    signal.Notify(c, syscall.SIGINT, syscall.SIGQUIT)
-    cc := make(chan int)
+    signal.Notify(c, os.Interrupt)
+    qc := make(chan string)
     go func() {
+    Loop:
         for {
-            s := <-c
-            if s == syscall.SIGINT {
+            select {
+            case <-c:
                 session.Signal(SIGINT)
-            } else if s == syscall.SIGQUIT {
-                cc <- 1
+                fmt.Println("")
+            case <-qc:
                 signal.Stop(c)
-                break
+                break Loop
             }
         }
     }()
     // Accepting commands
-Loop:
-    for {
-        select {
-        case <-cc:
-            break Loop
-        default:
-        }
-        reader := bufio.NewReader(os.Stdin)
-        str, _ := reader.ReadString('\n')
-        fmt.Fprint(in, str)
+    scanner := bufio.NewScanner(os.Stdin)
+    for scanner.Scan() {
+        fmt.Fprint(in, scanner.Text()+"\n")
     }
+    qc <- "Quit signal monitor"
 }
