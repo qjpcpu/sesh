@@ -6,6 +6,7 @@ import (
     "fmt"
     "io/ioutil"
     "os"
+    "regexp"
     "strings"
     "util"
 )
@@ -23,9 +24,25 @@ func showHelp() {
     -t TMP_DIRECTORY, Specify tmp directory.
     -parallel, Parallel execution.
     -check, pause after first host done.
+    -d name1=v1,name2=v2  the name would be replace by v in command or command file. The name format in command should be <%=name%>
     -help See help`
     fmt.Println(body)
 
+}
+func parseCmd(cmd, data string) string {
+    kv := make(map[string]string)
+    data = strings.Replace(data, " ", "", -1)
+    data = strings.TrimSuffix(data, ",")
+    arr := strings.Split(data, ",")
+    for _, b := range arr {
+        tmp := strings.Split(b, "=")
+        kv[tmp[0]] = tmp[1]
+    }
+    for k, v := range kv {
+        re := regexp.MustCompile("<%= *" + k + " *%>")
+        cmd = re.ReplaceAllString(cmd, v)
+    }
+    return cmd
 }
 func main() {
     hostfile := flag.String("f", "", "HOST_FILE, every host per line.")
@@ -39,6 +56,7 @@ func main() {
     parallel := flag.Bool("parallel", false, "Parallel execution.")
     pause := flag.Bool("check", false, "Pause after first host done.")
     help := flag.Bool("help", false, "See help.")
+    data := flag.String("d", "", "the name would be replace by v in command or command file. The name format in command should be <%=name%>")
     flag.Parse()
 
     //show help
@@ -117,6 +135,9 @@ func main() {
         return
     }
 
+    if *data != "" {
+        cmd = parseCmd(cmd, *data)
+    }
     // Begin to run
     printer := os.Stdout
     if *outfile != "" {

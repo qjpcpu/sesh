@@ -80,6 +80,20 @@ Use `-c` to specity command file:
 
 	sesh -f host-list -c get-user-process.cmd
 	
+#### Command argument parse
+
+You can embedded parameter in command or command file with `<%= name %>`, then invoke sesh with `-d`, for example, there is a command file `enter-today-dir.cmd`:
+
+	cd ~/<%=date%>/logs && pwd
+
+then, we can use sesh like this:
+
+	sesh -f hosts -d date=$(date +%Y%m%d) -c enter-today-dir.cmd
+	
+You can also use argument parse for inline commands:
+
+	sesh -f hosts -d who=jason 'echo <%=who%> is sexy'
+	
 #### Help
 
 	sesh -help
