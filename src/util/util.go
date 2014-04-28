@@ -74,7 +74,7 @@ func ParallelRun(config map[string]interface{}, host_arr []string, tmpdir string
     // Create master
     mgr, _ := job.NewManager()
     // Setup tmp directory for tmp files
-    dir := fmt.Sprintf("%s/.s3h.%d", tmpdir, time.Now().Second())
+    dir := fmt.Sprintf("%s/.s3h.%d", tmpdir, time.Now().Nanosecond())
     if err := os.Mkdir(dir, os.ModeDir|os.ModePerm); err != nil {
         return err
     }
