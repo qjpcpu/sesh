@@ -72,7 +72,7 @@ func ParallelRun(config map[string]interface{}, host_arr []string, tmpdir string
     cmd, _ := config["Cmd"].(string)
     printer, _ := config["Output"].(io.Writer)
 
-    // Create master
+    // Create master, the master is used to manage go routines
     mgr, _ := job.NewManager()
     // Setup tmp directory for tmp files
     dir := fmt.Sprintf("%s/.s3h.%d", tmpdir, time.Now().Nanosecond())
@@ -83,16 +83,19 @@ func ParallelRun(config map[string]interface{}, host_arr []string, tmpdir string
     // Listen interrupt and kill signal, clear tmp files before exit.
     intqueue := make(chan os.Signal, 1)
     signal.Notify(intqueue, os.Interrupt, os.Kill)
+    // If got interrupt or kill signal, delete tmp directory first, then exit with 1
     go func() {
         <-intqueue
         os.RemoveAll(dir)
         os.Exit(1)
     }()
+    // If the complete all the tasks normlly, stop listenning signals and remove tmp directory
     defer func() {
         signal.Stop(intqueue)
         os.RemoveAll(dir)
     }()
 
+    // Create tmp file for every host, then executes.
     var tmpfiles []*os.File
     for _, h := range host_arr {
         file, _ := os.Create(fmt.Sprintf("%s/%s", dir, h))
@@ -101,6 +104,7 @@ func ParallelRun(config map[string]interface{}, host_arr []string, tmpdir string
         go s3h.Work()
     }
 
+    // When a host is ready and request for continue, the master would echo CONTINUE for response to allow host to run
     size := len(host_arr)
     for {
         data, _ := mgr.Receive(-1)
@@ -109,6 +113,7 @@ func ParallelRun(config map[string]interface{}, host_arr []string, tmpdir string
             report(info["TAG"].(*sssh.Sssh).Output, info["TAG"].(*sssh.Sssh).Host)
             mgr.Send(info["FROM"].(string), map[string]interface{}{"FROM": "MASTER", "BODY": "CONTINUE"})
         } else if info["BODY"].(string) == "END" {
+            // If master gets every hosts' END message, then it stop waiting.
             size -= 1
             if size == 0 {
                 break
@@ -119,6 +124,7 @@ func ParallelRun(config map[string]interface{}, host_arr []string, tmpdir string
     for _, f := range tmpfiles {
         f.Close()
     }
+    // Merge all the hosts' output to the output file
     for _, h := range host_arr {
         fn := fmt.Sprintf("%s/%s", dir, h)
         src, _ := os.Open(fn)
