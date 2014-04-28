@@ -73,13 +73,13 @@ func (s3h *Sssh) Work() {
     }
     conn, err := Dial("tcp", s3h.Host+":22", config)
     if err != nil {
-        fmt.Println("unable to connect: ", err.Error())
+        fmt.Fprintln(s3h.Output, "unable to connect: ", err.Error())
         return
     }
     defer conn.Close()
     session, err := conn.NewSession()
     if err != nil {
-        fmt.Println("Failed to create session: " + err.Error())
+        fmt.Fprintln(s3h.Output, "Failed to create session: "+err.Error())
         return
     }
     defer session.Close()
@@ -104,13 +104,13 @@ func (s3h *Sssh) Login() {
     }
     conn, err := Dial("tcp", s3h.Host+":22", config)
     if err != nil {
-        fmt.Println("unable to connect: ", err.Error())
+        fmt.Fprintln(s3h.Output, "unable to connect: ", err.Error())
         return
     }
     defer conn.Close()
     session, err := conn.NewSession()
     if err != nil {
-        fmt.Println("Failed to create session: " + err.Error())
+        fmt.Fprintln(s3h.Output, "Failed to create session: "+err.Error())
         return
     }
     defer session.Close()
