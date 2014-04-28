@@ -7,7 +7,6 @@ import (
     "io"
     "io/ioutil"
     "job"
-    "log"
     "os"
     "os/signal"
 )
@@ -50,6 +49,9 @@ func getkey(file string) (key Signer, err error) {
 func (s3h *Sssh) Work() {
     if s3h.Member != nil {
         s3h.Send("MASTER", map[string]interface{}{"FROM": s3h.Host, "BODY": "BEGIN", "TAG": s3h})
+        defer func() {
+            s3h.Send("MASTER", map[string]interface{}{"FROM": s3h.Host, "BODY": "END"})
+        }()
         // Wait for master's reply
         data, _ := s3h.Receive(-1)
         info, _ := data.(map[string]interface{})
@@ -71,22 +73,20 @@ func (s3h *Sssh) Work() {
     }
     conn, err := Dial("tcp", s3h.Host+":22", config)
     if err != nil {
-        log.Fatalf("unable to connect: %s", err.Error())
+        fmt.Println("unable to connect: ", err.Error())
+        return
     }
     defer conn.Close()
     session, err := conn.NewSession()
     if err != nil {
-        panic("Failed to create session: " + err.Error())
+        fmt.Println("Failed to create session: " + err.Error())
+        return
     }
     defer session.Close()
 
     session.Stdout = s3h.Output
     session.Stderr = s3h.Output
     session.Run(s3h.Cmd)
-
-    if s3h.Member != nil {
-        s3h.Send("MASTER", map[string]interface{}{"FROM": s3h.Host, "BODY": "END"})
-    }
 }
 
 func (s3h *Sssh) Login() {
@@ -104,12 +104,14 @@ func (s3h *Sssh) Login() {
     }
     conn, err := Dial("tcp", s3h.Host+":22", config)
     if err != nil {
-        log.Fatalf("unable to connect: %s", err.Error())
+        fmt.Println("unable to connect: ", err.Error())
+        return
     }
     defer conn.Close()
     session, err := conn.NewSession()
     if err != nil {
-        panic("Failed to create session: " + err.Error())
+        fmt.Println("Failed to create session: " + err.Error())
+        return
     }
     defer session.Close()
     // Set IO
@@ -126,12 +128,14 @@ func (s3h *Sssh) Login() {
 
     // Request pseudo terminal
     if err := session.RequestPty("xterm", 80, 200, modes); err != nil {
-        log.Fatalf("request for pseudo terminal failed: %s", err)
+        fmt.Println("request for pseudo terminal failed: %s", err)
+        return
     }
 
     // Start remote shell
     if err := session.Shell(); err != nil {
-        log.Fatalf("failed to start shell: %s", err)
+        fmt.Println("failed to start shell: %s", err)
+        return
     }
 
     c := make(chan os.Signal, 1)
