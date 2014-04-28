@@ -3,6 +3,7 @@ package util
 import (
     "encoding/json"
     "fmt"
+    "github.com/cheggaaa/pb"
     "io"
     "io/ioutil"
     "job"
@@ -51,6 +52,11 @@ func SerialRun(config map[string]interface{}, host_arr []string) error {
 
     mgr, _ := job.NewManager()
 
+    //Setup progress bar if the output is not os.Stdout
+    var bar *pb.ProgressBar
+    if printer != os.Stdout {
+        bar = pb.StartNew(len(host_arr))
+    }
     for _, h := range host_arr {
         s3h := sssh.NewS3h(h, user, pwd, keyfile, cmd, printer, mgr)
         go func() {
@@ -61,6 +67,9 @@ func SerialRun(config map[string]interface{}, host_arr []string) error {
                 mgr.Send(s3h.Host, map[string]interface{}{"FROM": "MASTER", "BODY": "STOP"})
             }
         }()
+        if printer != os.Stdout {
+            bar.Increment()
+        }
         s3h.Work()
     }
     return nil
@@ -79,6 +88,12 @@ func ParallelRun(config map[string]interface{}, host_arr []string, tmpdir string
     if err := os.Mkdir(dir, os.ModeDir|os.ModePerm); err != nil {
         return err
     }
+
+    //Setup progress bar
+    bar := pb.StartNew(len(host_arr))
+    bar.ShowPercent = false
+    bar.ShowCounters = false
+    bar.ShowTimeLeft = true
 
     // Listen interrupt and kill signal, clear tmp files before exit.
     intqueue := make(chan os.Signal, 1)
@@ -113,6 +128,7 @@ func ParallelRun(config map[string]interface{}, host_arr []string, tmpdir string
             report(info["TAG"].(*sssh.Sssh).Output, info["TAG"].(*sssh.Sssh).Host)
             mgr.Send(info["FROM"].(string), map[string]interface{}{"FROM": "MASTER", "BODY": "CONTINUE"})
         } else if info["BODY"].(string) == "END" {
+            bar.Increment()
             // If master gets every hosts' END message, then it stop waiting.
             size -= 1
             if size == 0 {
