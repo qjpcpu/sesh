@@ -7,6 +7,7 @@ import (
     "io/ioutil"
     "job"
     "os"
+    "os/signal"
     "sssh"
     "time"
 )
@@ -78,7 +79,19 @@ func ParallelRun(config map[string]interface{}, host_arr []string, tmpdir string
     if err := os.Mkdir(dir, os.ModeDir|os.ModePerm); err != nil {
         return err
     }
-    defer os.RemoveAll(dir)
+
+    // Listen interrupt and kill signal, clear tmp files before exit.
+    intqueue := make(chan os.Signal, 1)
+    signal.Notify(intqueue, os.Interrupt, os.Kill)
+    go func() {
+        <-intqueue
+        os.RemoveAll(dir)
+        os.Exit(1)
+    }()
+    defer func() {
+        signal.Stop(intqueue)
+        os.RemoveAll(dir)
+    }()
 
     var tmpfiles []*os.File
     for _, h := range host_arr {
