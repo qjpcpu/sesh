@@ -41,7 +41,12 @@ func Gets3hrc() (conf map[string]string, err error) {
 
 // Hook for per task state changed
 func report(output io.Writer, host string) {
-    output.Write([]byte(fmt.Sprintf("\033[33m========== %s ==========\033[0m\n", host)))
+    if output == os.Stdout {
+        output.Write([]byte(fmt.Sprintf("\033[33m========== %s ==========\033[0m\n", host)))
+    } else {
+
+        output.Write([]byte(fmt.Sprintf("========== %s ==========\n", host)))
+    }
 }
 func SerialRun(config map[string]interface{}, host_arr []string) error {
     user, _ := config["User"].(string)
