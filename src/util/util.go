@@ -1,6 +1,7 @@
 package util
 
 import (
+    "cowsay"
     "encoding/json"
     "fmt"
     "github.com/cheggaaa/pb"
@@ -37,6 +38,10 @@ func Gets3hrc() (conf map[string]string, err error) {
         conf["keyfile"] = rc.Keyfile
         return conf, err
     }
+}
+
+func cowSay(content ...interface{}) string {
+    return cowsay.Format(fmt.Sprint(content))
 }
 
 // Hook for per task state changed
@@ -94,12 +99,8 @@ func ParallelRun(config map[string]interface{}, host_arr []string, tmpdir string
         return err
     }
 
-    //Setup progress bar
-    bar := pb.StartNew(len(host_arr))
-    bar.ShowPercent = false
-    bar.ShowCounters = false
-    bar.ShowTimeLeft = true
-
+    // Print cowsay wait
+    fmt.Println(cowSay("  Please wait a moment, I'm ready soon!  "))
     // Listen interrupt and kill signal, clear tmp files before exit.
     intqueue := make(chan os.Signal, 1)
     signal.Notify(intqueue, os.Interrupt, os.Kill)
@@ -133,7 +134,6 @@ func ParallelRun(config map[string]interface{}, host_arr []string, tmpdir string
             report(info["TAG"].(*sssh.Sssh).Output, info["TAG"].(*sssh.Sssh).Host, printer == os.Stdout)
             mgr.Send(info["FROM"].(string), map[string]interface{}{"FROM": "MASTER", "BODY": "CONTINUE"})
         } else if info["BODY"].(string) == "END" {
-            bar.Increment()
             // If master gets every hosts' END message, then it stop waiting.
             size -= 1
             if size == 0 {
