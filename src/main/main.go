@@ -158,11 +158,7 @@ func main() {
     }
     host_offset := 0
     if *pause {
-        if *parallel {
-            util.ParallelRun(config, host_arr[0:1], *tmpdir)
-        } else {
-            util.SerialRun(config, host_arr[0:1])
-        }
+        util.SerialRun(config, host_arr[0:1])
         fmt.Printf("The task on \033[33m%s\033[0m has done.\nPress any key to auto login \033[33m%s\033[0m to have a check...", host_arr[0], host_arr[0])
         reader := bufio.NewReader(os.Stdin)
         reader.ReadString('\n')
