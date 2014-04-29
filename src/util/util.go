@@ -40,7 +40,7 @@ func Gets3hrc() (conf map[string]string, err error) {
     }
 }
 
-func cowSay(content ...interface{}) string {
+func girlSay(content ...interface{}) string {
     return cowsay.Format(fmt.Sprint(content))
 }
 
@@ -100,7 +100,7 @@ func ParallelRun(config map[string]interface{}, host_arr []string, tmpdir string
     }
 
     // Print cowsay wait
-    fmt.Println(cowSay("  Please wait a moment, I'm ready soon!  "))
+    fmt.Println(girlSay("  Please wait me for a moment, Baby!  "))
     // Listen interrupt and kill signal, clear tmp files before exit.
     intqueue := make(chan os.Signal, 1)
     signal.Notify(intqueue, os.Interrupt, os.Kill)
