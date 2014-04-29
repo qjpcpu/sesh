@@ -40,8 +40,8 @@ func Gets3hrc() (conf map[string]string, err error) {
 }
 
 // Hook for per task state changed
-func report(output io.Writer, host string) {
-    if output == os.Stdout {
+func report(output io.Writer, host string, color bool) {
+    if color {
         output.Write([]byte(fmt.Sprintf("\033[33m========== %s ==========\033[0m\n", host)))
     } else {
 
@@ -66,7 +66,7 @@ func SerialRun(config map[string]interface{}, host_arr []string) error {
         s3h := sssh.NewS3h(h, user, pwd, keyfile, cmd, printer, mgr)
         go func() {
             if _, err := mgr.Receive(-1); err == nil {
-                report(s3h.Output, s3h.Host)
+                report(s3h.Output, s3h.Host, os.Stdout == printer)
                 mgr.Send(s3h.Host, map[string]interface{}{"FROM": "MASTER", "BODY": "CONTINUE"})
             } else {
                 mgr.Send(s3h.Host, map[string]interface{}{"FROM": "MASTER", "BODY": "STOP"})
@@ -130,7 +130,7 @@ func ParallelRun(config map[string]interface{}, host_arr []string, tmpdir string
         data, _ := mgr.Receive(-1)
         info, _ := data.(map[string]interface{})
         if info["BODY"].(string) == "BEGIN" {
-            report(info["TAG"].(*sssh.Sssh).Output, info["TAG"].(*sssh.Sssh).Host)
+            report(info["TAG"].(*sssh.Sssh).Output, info["TAG"].(*sssh.Sssh).Host, printer == os.Stdout)
             mgr.Send(info["FROM"].(string), map[string]interface{}{"FROM": "MASTER", "BODY": "CONTINUE"})
         } else if info["BODY"].(string) == "END" {
             bar.Increment()
