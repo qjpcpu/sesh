@@ -98,16 +98,16 @@ You can also use argument parse for inline commands:
 
 And sesh also support embedded template, for example, there is two command template files:
 
-```bash who.cmd
-{{define "who"}}
-whoami
-{{end}}
-```
+File who.cmd
 
-```bash main.cmd
-name=$({{ template "who" }})
-echo "Now ${name} is in $(pwd)"
-```
+	{{define "who"}}
+	whoami
+	{{end}}
+	
+File main.cmd
+
+	name=$({{ template "who" }})
+	echo "Now ${name} is in $(pwd)"
 
 Then we can use sesh like this:
 
