@@ -6,43 +6,43 @@ import (
     "fmt"
     "io/ioutil"
     "os"
-    "regexp"
     "strings"
+    "templ"
     "util"
 )
 
+type cfilesFlag []string
+
+func (c *cfilesFlag) String() string {
+    return fmt.Sprint(*c)
+}
+func (c *cfilesFlag) Set(value string) error {
+    for _, v := range *c {
+        if v == value {
+            return nil
+        }
+    }
+    *c = append(*c, value)
+    return nil
+}
 func showHelp() {
     fmt.Println("\033[33mUsage: sesh -f HOST_FILE -u USER -p PASSWORD COMMAND\033[0m")
     fmt.Println("\033[33mSimple usage(with config file ~/.seshrc): sesh -f HOST_FILE COMMAND\033[0m")
-    body := `    -f HOST_FILE, every host per line.
-    -h HOSTS, hosts seperated by comma.
-    -u USER, user name.
-    -p PASSWORD, password.
-    -k KEY_FILE, rsa file.
-    -o OUTFILE, Save output to file.
-    -c CMD_FILE, Command file.
-    -t TMP_DIRECTORY, Specify tmp directory.
-    -parallel, Parallel execution.
-    -check, pause after first host done.
-    -d name1=v1,name2=v2  the name would be replace by v in command or command file. The name format in command should be <%=name%>
-    -help See help`
-    fmt.Println(body)
-
+    flag.PrintDefaults()
 }
-func parseCmd(cmd, data string) string {
-    kv := make(map[string]string)
+func parseData(data string) map[string]interface{} {
+    kv := make(map[string]interface{})
     data = strings.Replace(data, " ", "", -1)
     data = strings.TrimSuffix(data, ",")
+    if data == "" {
+        return kv
+    }
     arr := strings.Split(data, ",")
     for _, b := range arr {
         tmp := strings.Split(b, "=")
         kv[tmp[0]] = tmp[1]
     }
-    for k, v := range kv {
-        re := regexp.MustCompile("<%= *" + k + " *%>")
-        cmd = re.ReplaceAllString(cmd, v)
-    }
-    return cmd
+    return kv
 }
 func main() {
     hostfile := flag.String("f", "", "HOST_FILE, every host per line.")
@@ -51,12 +51,13 @@ func main() {
     password := flag.String("p", "", "PASSWORD, password.")
     keyfile := flag.String("k", "", "KEY_FILE, rsa file.")
     outfile := flag.String("o", "", "OUTFILE, Save output to file.")
-    cmdfile := flag.String("c", "", "CMD_FILE, Command file.")
+    var cmd_file_list cfilesFlag
+    flag.Var(&cmd_file_list, "c", "CMD_FILE, Command file.")
     tmpdir := flag.String("t", ".", "TMP_DIRECTORY, Specify tmp directory.")
     parallel := flag.Bool("parallel", false, "Parallel execution.")
     pause := flag.Bool("check", false, "Pause after first host done.")
     help := flag.Bool("help", false, "See help.")
-    data := flag.String("d", "", "the name would be replace by v in command or command file. The name format in command should be <%=name%>")
+    data := flag.String("d", "", "the name would be replace by v in command or command file. The name format in command should be {{ .name }}")
     flag.Parse()
 
     //show help
@@ -109,25 +110,33 @@ func main() {
     }
 
     //check command
-    if len(flag.Args()) == 0 && *cmdfile == "" {
+    if len(flag.Args()) == 0 && len(cmd_file_list) == 0 {
         fmt.Println("\033[31mPlese specify command you want execute.\033[0m")
         return
     }
     cmd := ""
-    if *cmdfile != "" {
-        if _, err := os.Stat(*cmdfile); os.IsNotExist(err) {
-            fmt.Println("\033[31mCommand file " + *cmdfile + " not found!\033[0m")
+    if len(cmd_file_list) > 0 {
+        for _, cf := range cmd_file_list {
+            if _, err := os.Stat(cf); os.IsNotExist(err) {
+                fmt.Println("\033[31mCommand file " + cf + " not found!\033[0m")
+                return
+            }
+        }
+        if o, err := templ.ParseFromFiles(cmd_file_list, parseData(*data)); err != nil {
+            fmt.Println("\033[31mParse command file failed!\033[0m")
             return
-        }
-        if buf, err := ioutil.ReadFile(*cmdfile); err == nil {
-            cmd = string(buf)
-        }
-        if cmd == "" {
-            fmt.Println("\033[31mCommand file " + *cmdfile + " is empty!\033[0m")
+        } else {
+            cmd = o
         }
     } else {
         for _, v := range flag.Args() {
             cmd = cmd + v + " "
+        }
+        if o, err := templ.ParseFromString(cmd, parseData(*data)); err != nil {
+            fmt.Println("\033[31mParse command file failed!\033[0m")
+            return
+        } else {
+            cmd = o
         }
     }
     if _, err := os.Stat(*tmpdir); os.IsNotExist(err) && *parallel {
@@ -135,9 +144,6 @@ func main() {
         return
     }
 
-    if *data != "" {
-        cmd = parseCmd(cmd, *data)
-    }
     // Begin to run
     printer := os.Stdout
     if *outfile != "" {

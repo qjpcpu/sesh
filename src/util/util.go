@@ -82,7 +82,9 @@ func SerialRun(config map[string]interface{}, host_arr []string) error {
         }
         s3h.Work()
     }
-    bar.FinishPrint("")
+    if printer != os.Stdout {
+        bar.FinishPrint("")
+    }
     return nil
 }
 func ParallelRun(config map[string]interface{}, host_arr []string, tmpdir string) error {

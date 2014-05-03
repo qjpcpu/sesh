@@ -1,0 +1,12 @@
+syntax: glob
+
+_*
+*.8
+*.a
+*.bat
+*.c
+*.dll
+*.h
+*.o
+*.swp
+*.txt
