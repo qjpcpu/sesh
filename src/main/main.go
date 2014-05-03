@@ -2,9 +2,9 @@ package main
 
 import (
     "bufio"
-    "flag"
     "fmt"
     "io/ioutil"
+    flag "mflag"
     "os"
     "strings"
     "templ"
@@ -30,6 +30,23 @@ func showHelp() {
     fmt.Println("\033[33mSimple usage(with config file ~/.seshrc): sesh -f HOST_FILE COMMAND\033[0m")
     flag.PrintDefaults()
 }
+
+func printDebugInfo(config map[string]interface{}, hosts []string) {
+    fmt.Println("\033[33mConfigurations:\033[0m")
+    fmt.Printf("\033[32mUser:\033[0m %v\n", config["User"])
+    fmt.Printf("\033[32mKeyfile:\033[0m %v\n", config["Keyfile"])
+    pas := ""
+    if p, ok := config["Password"].(string); ok && p != "" {
+        pas = "INVISIBLE"
+    }
+    fmt.Printf("\033[32mPassword:\033[0m %v\n", pas)
+    if f, ok := config["Output"].(*os.File); ok {
+        fmt.Printf("\033[32mOutput:\033[0m %v\n", f.Name())
+    }
+    fmt.Printf("\033[32mHosts:\033[0m %v\n", hosts)
+    fmt.Printf("\033[32mComands:\033[0m\n%v\n", config["Cmd"])
+
+}
 func parseData(data string) map[string]interface{} {
     kv := make(map[string]interface{})
     data = strings.Replace(data, " ", "", -1)
@@ -45,19 +62,20 @@ func parseData(data string) map[string]interface{} {
     return kv
 }
 func main() {
-    hostfile := flag.String("f", "", "HOST_FILE, every host per line.")
-    hostlist := flag.String("h", "", "HOSTS, hosts seperated by comma.")
-    user := flag.String("u", "", "USER, user name.")
-    password := flag.String("p", "", "PASSWORD, password.")
-    keyfile := flag.String("k", "", "KEY_FILE, rsa file.")
-    outfile := flag.String("o", "", "OUTFILE, Save output to file.")
+    hostfile := flag.String([]string{"f", "-host-file"}, "", "HOST_FILE, every host per line.")
+    hostlist := flag.String([]string{"h", "-host-list"}, "", "HOSTS, hosts seperated by comma.")
+    user := flag.String([]string{"u", "-user"}, "", "USER, user name.")
+    password := flag.String([]string{"p", "-password"}, "", "PASSWORD, password.")
+    keyfile := flag.String([]string{"k", "-key"}, "", "KEY_FILE, rsa file.")
+    outfile := flag.String([]string{"o", "-output"}, "", "OUTFILE, Save output to file.")
     var cmd_file_list cfilesFlag
-    flag.Var(&cmd_file_list, "c", "CMD_FILE, Command file.")
-    tmpdir := flag.String("t", ".", "TMP_DIRECTORY, Specify tmp directory.")
-    parallel := flag.Bool("parallel", false, "Parallel execution.")
-    pause := flag.Bool("check", false, "Pause after first host done.")
-    help := flag.Bool("help", false, "See help.")
-    data := flag.String("d", "", "the name would be replace by v in command or command file. The name format in command should be {{ .name }}")
+    flag.Var(&cmd_file_list, []string{"c", "-command-file"}, "CMD_FILE, Command file.")
+    tmpdir := flag.String([]string{"t", "-tmp-directory"}, ".", "TMP_DIRECTORY, Specify tmp directory.")
+    parallel := flag.Bool([]string{"r", "-rapid"}, false, "Parallel execution.")
+    pause := flag.Bool([]string{"-check"}, false, "Pause after first host done.")
+    help := flag.Bool([]string{"-help"}, false, "See help.")
+    data := flag.String([]string{"d", "-data"}, "", "the name would be replace according name=value pair in command or command file. The name format in command should be {{ .name }}")
+    debug := flag.Bool([]string{"-debug"}, false, "Print the configurations, not perform tasks.")
     flag.Parse()
 
     //show help
@@ -161,6 +179,10 @@ func main() {
         "Keyfile":  *keyfile,
         "Cmd":      cmd,
         "Output":   printer,
+    }
+    if *debug {
+        printDebugInfo(config, host_arr)
+        return
     }
     host_offset := 0
     if *pause {

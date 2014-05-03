@@ -53,9 +53,9 @@ Sesh would use this file as preference, so you can input less:
 	
 #### Parallel
 
-Sesh would execute job for each host serially by default, swith `-parallel` on for parallel execution:
+Sesh would execute job for each host serially by default, swith `-r` on for parallel execution:
 
-	sesh -f host-file -parallel 'echo hello'
+	sesh -f host-file -r 'echo hello'
 	
 #### Save output
 
@@ -117,7 +117,7 @@ Then we can use sesh like this:
 	
 The main template `main.cmd` invoke the embedded template `who.cmd`. Use `{{define "XXX"}} ....{{end}}` to define template `XXX`, and then use `{{template "XXX"}}` to invoke template. By default, the `-d` parameters can't be seen in subtemplate, if you want deliver parameters into subtemplate, you should use:
 
-	{{ templdate "XXX" . }}
+	{{ template "XXX" . }}
 	
 
 #### Help
