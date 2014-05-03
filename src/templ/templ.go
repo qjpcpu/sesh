@@ -19,8 +19,11 @@ func ParseFromFiles(files []string, data map[string]interface{}) (string, error)
 }
 
 func ParseFromString(cmd string, data map[string]interface{}) (string, error) {
-    tmpl := template.Must(template.New("commands").Parse(cmd))
+    tmpl, err := template.New("commands").Parse(cmd)
+    if err != nil {
+        return "", err
+    }
     var pcmd bytes.Buffer
-    err := tmpl.Execute(&pcmd, data)
+    err = tmpl.Execute(&pcmd, data)
     return pcmd.String(), err
 }

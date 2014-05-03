@@ -141,7 +141,7 @@ func main() {
             }
         }
         if o, err := templ.ParseFromFiles(cmd_file_list, parseData(*data)); err != nil {
-            fmt.Println("\033[31mParse command file failed!\033[0m")
+            fmt.Printf("\033[31mParse command file failed!\033[0m\n%v\n", err)
             return
         } else {
             cmd = o
@@ -151,7 +151,7 @@ func main() {
             cmd = cmd + v + " "
         }
         if o, err := templ.ParseFromString(cmd, parseData(*data)); err != nil {
-            fmt.Println("\033[31mParse command file failed!\033[0m")
+            fmt.Printf("\033[31mParse command failed!\033[0m\n%v\n", err)
             return
         } else {
             cmd = o
