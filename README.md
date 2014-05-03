@@ -94,7 +94,7 @@ You can also use argument parse for inline commands:
 
 	sesh -f hosts -d who=jason 'echo {{ .who }} is sexy'
 	
-### Embedded command template
+#### Embedded command template
 
 And sesh also support embedded template, for example, there is two command template files:
 
