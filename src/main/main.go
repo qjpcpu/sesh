@@ -72,6 +72,7 @@ func main() {
     flag.Var(&cmd_file_list, []string{"c", "-command-file"}, "CMD_FILE, Command file.")
     tmpdir := flag.String([]string{"t", "-tmp-directory"}, ".", "TMP_DIRECTORY, Specify tmp directory.")
     parallel := flag.Bool([]string{"r", "-rapid"}, false, "Parallel execution.")
+    concurence := flag.Int([]string{"-parallel-degree"}, 0, "Parallel degree, default is the size of hosts.")
     pause := flag.Bool([]string{"-check"}, false, "Pause after first host done.")
     help := flag.Bool([]string{"-help"}, false, "See help.")
     data := flag.String([]string{"d", "-data"}, "", "the name would be replace according name=value pair in command or command file. The name format in command should be {{ .name }}")
@@ -197,7 +198,22 @@ func main() {
         host_offset = 1
     }
     if *parallel {
-        util.ParallelRun(config, host_arr[host_offset:len(host_arr)], *tmpdir)
+        fmt.Println(util.GirlSay("  Please wait me for a moment, Baby!  "))
+        end := len(host_arr)
+        if *concurence < 1 || *concurence > (end-host_offset) {
+            *concurence = end - host_offset
+        }
+        for {
+            to := host_offset + *concurence
+            if to > end {
+                to = end
+            }
+            if host_offset >= to {
+                break
+            }
+            util.ParallelRun(config, host_arr[host_offset:to], *tmpdir)
+            host_offset += *concurence
+        }
     } else {
         util.SerialRun(config, host_arr[host_offset:len(host_arr)])
     }
