@@ -57,6 +57,12 @@ Sesh would execute job for each host serially by default, swith `-r` on for para
 
 	sesh -f host-file -r 'echo hello'
 	
+Sesh would execute all task by parallel,if you want control the parallel degree, you could use `--parallel-degree`.
+
+Forexample, if you want execute every 2 hosts by paraallel:
+
+    sesh -f host-file -r --parallel-degree 2 'echo hello'
+
 #### Save output
 
 Sesh would print remote output to screen by default, but you can save output to file
