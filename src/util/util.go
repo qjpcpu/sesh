@@ -167,5 +167,5 @@ func Interact(config map[string]interface{}, host string) {
 
     mgr, _ := job.NewManager()
     s3h := sssh.NewS3h(host, user, pwd, keyfile, cmd, printer, mgr)
-    s3h.Login()
+    s3h.SysLogin()
 }

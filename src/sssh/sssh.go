@@ -8,7 +8,9 @@ import (
     "io/ioutil"
     "job"
     "os"
+    "os/exec"
     "os/signal"
+    "strings"
 )
 
 type Sssh struct {
@@ -160,4 +162,22 @@ func (s3h *Sssh) Login() {
         fmt.Fprint(in, scanner.Text()+"\n")
     }
     qc <- "Quit signal monitor"
+}
+func (s3h *Sssh) SysLogin() {
+    str := "ssh " + s3h.User + "@" + s3h.Host
+    if s3h.Keyfile != "" {
+        str = str + " -i " + s3h.Keyfile
+    }
+    parts := strings.Fields(str)
+    head := parts[0]
+    parts = parts[1:len(parts)]
+    cmd := exec.Command(head, parts...)
+    cmd.Stdin = os.Stdin
+    cmd.Stdout = os.Stdout
+    cmd.Stderr = os.Stderr
+    err := cmd.Run()
+    if err != nil {
+        fmt.Fprintln(s3h.Output, err.Error())
+        return
+    }
 }
