@@ -71,9 +71,9 @@ Sesh would print remote output to screen by default, but you can save output to 
 	
 #### Check for sure
 
-If you want have a check after the first host's job done, you can use `-check`, when  first job done, you would auto logon the first host, if everything is fine, press `Ctrl+D`to return and continue.
+If you want have a check after the first host's job done, you can use `--check`, when  first job done, you would auto logon the first host, if everything is fine, press `Ctrl+D`to return and continue.
 
-	sesh -f host-file -check 'touch new-file'
+	sesh -f host-file --check 'touch new-file'
 	
 #### Execute script
 
