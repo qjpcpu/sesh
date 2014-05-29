@@ -77,14 +77,15 @@ If you want have a check after the first host's job done, you can use `--check`,
 	
 #### Execute script
 
-If you want execute many commands on remote host, you would find it's hard to use `ssh` command to accomplish that, so you can put these comands into a file, for example `get-user-process.cmd`:
+If you want execute many commands on remote host, you would find it's hard to use `ssh` command to accomplish that, so you can put these comands into a file, for example `keygen.cmd`:
 
-	user=`whoami`
-	pstree $user|grep -vE '^ |^$'|awk -F "---" '{print $1}'
+	if [ ! -e "~/.ssh/id_rsa" ];then
+        ssh-keygen -t rsa -N "" -f ~/.ssh/id_rsa
+	fi
 
 Use `-c` to specity command file:
 
-	sesh -f host-list -c get-user-process.cmd
+	sesh -f host-list -c keygen.cmd
 	
 #### Command template
 
