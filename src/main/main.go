@@ -106,6 +106,7 @@ func main() {
         host_arr = strings.Split(hoststr, ",")
     }
 
+    // get user
     rc, err := util.Gets3hrc()
     if *user == "" {
         if err == nil {
@@ -115,6 +116,8 @@ func main() {
             *user = os.Getenv("USER")
         }
     }
+
+    // get password or key file
     if *password == "" && *keyfile == "" {
         if err == nil {
             *keyfile = rc["keyfile"]
@@ -133,6 +136,7 @@ func main() {
         fmt.Println("\033[31mPlese specify command you want execute.\033[0m")
         return
     }
+    // parse command template
     cmd := ""
     if len(cmd_file_list) > 0 {
         for _, cf := range cmd_file_list {
@@ -148,6 +152,7 @@ func main() {
             cmd = o
         }
     } else {
+        // join commands
         for _, v := range flag.Args() {
             cmd = cmd + v + " "
         }
