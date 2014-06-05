@@ -30,6 +30,11 @@ If the hosts can be counted, you can use `-h` to specify remote hosts, seperated
 
 	sesh -h www.host1.com,www.host2.com -u user -p password 'echo hello'
 
+Sesh also can get hosts from Stdin:
+    
+    echo host1,host2 | sesh -u user -p password 'echo hello'
+    cat host-file | sesh -u user -p password 'echo hello'
+
 #### Authorization
 Use `-p` to specify password, but it's better to use rsa authorization with `-k`:
 

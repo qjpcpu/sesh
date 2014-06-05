@@ -87,23 +87,20 @@ func main() {
 
     // get hosts
     var host_arr []string
-    if *hostfile == "" && *hostlist == "" {
-        fmt.Println("\033[31mPlese specify hosts with -f or -h!\033[0m")
-        return
-    }
     if *hostfile != "" {
         if buf, err := ioutil.ReadFile(*hostfile); err != nil {
             fmt.Println("\033[31mFailed to read host from file!\033[0m")
             return
         } else {
             hoststr := string(buf)
-            hoststr = strings.Replace(hoststr, " ", "", -1)
-            hoststr = strings.TrimSuffix(hoststr, "\n")
-            host_arr = strings.Split(hoststr, "\n")
+            host_arr = parseHostsFromString(hoststr)
         }
+    } else if *hostlist != "" {
+        host_arr = parseHostsFromString(*hostlist)
     } else {
-        hoststr := strings.TrimSuffix(*hostlist, ",")
-        host_arr = strings.Split(hoststr, ",")
+        fmt.Println("\033[33mPlese input hosts, seperated by LINE SEPERATOR, press Ctrl+D to finish input:\033[0m")
+        buf, _ := ioutil.ReadAll(os.Stdin)
+        host_arr = parseHostsFromString(string(buf))
     }
 
     // get user
