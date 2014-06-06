@@ -2,6 +2,7 @@ package main
 
 import (
     "bufio"
+    "code.google.com/p/go.crypto/ssh/terminal"
     "fmt"
     "io/ioutil"
     flag "mflag"
@@ -98,7 +99,9 @@ func main() {
     } else if *hostlist != "" {
         host_arr = parseHostsFromString(*hostlist)
     } else {
-        fmt.Println("\033[33mRead hosts from Stdin, seperated by LINE SEPERATOR, press Ctrl+D to finish input:\033[0m")
+        if terminal.IsTerminal(0) {
+            fmt.Println("\033[33mPlease input hosts, seperated by LINE SEPERATOR, press Ctrl+D to finish input:\033[0m")
+        }
         buf, _ := ioutil.ReadAll(os.Stdin)
         host_arr = parseHostsFromString(string(buf))
     }
