@@ -114,6 +114,7 @@ This is a ruby script `x.rb`:
     puts ARGV
     
 Now the sesh would be:
+
 	sesh -f hosts -c x.rb --args "hello"
 
 #### Embedded command template
