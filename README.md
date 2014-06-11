@@ -106,6 +106,16 @@ You can also use argument parse for inline commands:
 
 	sesh -f hosts -d who=jason 'echo {{ .who }} is sexy'
 	
+Or you can invoke script(the first line must start with `#!`) with arguments in normal way:
+
+This is a ruby script `x.rb`:
+
+    #!/usr/bin/ruby
+    puts ARGV
+    
+Now the sesh would be:
+	sesh -f hosts -c x.rb --args "hello"
+
 #### Embedded command template
 
 And sesh also support embedded template, for example, there is two command template files:

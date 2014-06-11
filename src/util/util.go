@@ -58,8 +58,9 @@ func SerialRun(config map[string]interface{}, host_arr []string) error {
     pwd, _ := config["Password"].(string)
     keyfile, _ := config["Keyfile"].(string)
     cmd, _ := config["Cmd"].(string)
+    args, _ := config["Args"].(string)
     // Format command
-    cmd = format_cmd(cmd)
+    cmd = format_cmd(cmd, args)
     printer, _ := config["Output"].(io.Writer)
 
     mgr, _ := job.NewManager()
@@ -94,7 +95,8 @@ func ParallelRun(config map[string]interface{}, host_arr []string, tmpdir string
     pwd, _ := config["Password"].(string)
     keyfile, _ := config["Keyfile"].(string)
     cmd, _ := config["Cmd"].(string)
-    cmd = format_cmd(cmd)
+    args, _ := config["Args"].(string)
+    cmd = format_cmd(cmd, args)
     printer, _ := config["Output"].(io.Writer)
 
     // Create master, the master is used to manage go routines

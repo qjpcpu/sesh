@@ -26,6 +26,7 @@ func main() {
     pause := flag.Bool([]string{"-check"}, false, "Pause after first host done.")
     help := flag.Bool([]string{"-help"}, false, "See help.")
     data := flag.String([]string{"d", "-data"}, "", "the name would be replace according name=value pair in command or command file. The name format in command should be {{ .name }}")
+    args := flag.String([]string{"-args"}, "", "args for script.")
     debug := flag.Bool([]string{"-debug"}, false, "Print the configurations, not perform tasks.")
     flag.Parse()
 
@@ -133,6 +134,7 @@ func main() {
         "Password": *password,
         "Keyfile":  *keyfile,
         "Cmd":      cmd,
+        "Args":     *args,
         "Output":   printer,
     }
     if *debug {
