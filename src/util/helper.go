@@ -14,7 +14,7 @@ func format_cmd(cmd, args string) string {
             exe = strings.TrimRight(exe[2:], "\n")
             if args != "" {
                 tmp := fmt.Sprintf("/tmp/sesh-%v", time.Now().Nanosecond())
-                return "(cat >" + tmp + " <<\\EOF\n" + cmd + "\nEOF\n) && " + exe + " " + tmp + " " + args + " && rm -f " + tmp
+                return "(cat >" + tmp + " <<\\EOF\n" + cmd + "\nEOF\n) && " + exe + " " + tmp + " " + args + "; rm -f " + tmp
             } else {
                 return "(cat <<\\EOF\n" + cmd + "\nEOF\n) |" + exe
             }
