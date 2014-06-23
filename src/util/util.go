@@ -16,8 +16,9 @@ import (
 
 // Get configurations form $HOME/.seshrc
 type s3hrc struct {
-    User    string
-    Keyfile string
+    User     string
+    Keyfile  string
+    Password string
 }
 
 func Gets3hrc() (conf map[string]string, err error) {
@@ -36,6 +37,7 @@ func Gets3hrc() (conf map[string]string, err error) {
         }
         conf["user"] = rc.User
         conf["keyfile"] = rc.Keyfile
+        conf["password"] = rc.Password
         return conf, err
     }
 }

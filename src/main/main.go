@@ -66,9 +66,13 @@ func main() {
             *user = os.Getenv("USER")
         }
     }
+    // get password
+    if *password == "" && err == nil && *user == rc["user"] && rc["password"] != "" {
+        *password = rc["password"]
+    }
 
-    // get password or key file
-    if *password == "" && *keyfile == "" {
+    // get  key file
+    if *keyfile == "" {
         if err == nil {
             *keyfile = rc["keyfile"]
         }
@@ -76,8 +80,12 @@ func main() {
             *keyfile = os.Getenv("HOME") + "/.ssh/id_rsa"
         }
         if _, err := os.Stat(*keyfile); os.IsNotExist(err) {
-            fmt.Println("\033[31mKey file " + *keyfile + " not found!\033[0m")
-            return
+            if *password == "" {
+                fmt.Println("\033[31mKey file " + *keyfile + " not found!\033[0m")
+                return
+            } else {
+                *keyfile = ""
+            }
         }
     }
 

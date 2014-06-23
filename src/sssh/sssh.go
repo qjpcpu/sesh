@@ -75,8 +75,20 @@ func (s3h *Sssh) Work() {
     }
     conn, err := Dial("tcp", s3h.Host+":22", config)
     if err != nil {
-        fmt.Fprintln(s3h.Output, "unable to connect: ", err.Error())
-        return
+        if s3h.Password != "" && strings.Contains(err.Error(), "unable to authenticate, attempted methods [none publickey]") {
+            config = &ClientConfig{
+                User: s3h.User,
+                Auth: []AuthMethod{Password(s3h.Password)},
+            }
+            conn, err = Dial("tcp", s3h.Host+":22", config)
+            if err != nil {
+                fmt.Fprintln(s3h.Output, "unable to connect: ", err.Error())
+                return
+            }
+        } else {
+            fmt.Fprintln(s3h.Output, "unable to connect: ", err.Error())
+            return
+        }
     }
     defer conn.Close()
     session, err := conn.NewSession()
