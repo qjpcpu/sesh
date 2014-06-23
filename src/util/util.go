@@ -2,11 +2,10 @@ package util
 
 import (
     "cowsay"
-    "encoding/json"
     "fmt"
     "github.com/cheggaaa/pb"
+    cfg "goconf.googlecode.com/hg"
     "io"
-    "io/ioutil"
     "job"
     "os"
     "os/signal"
@@ -14,30 +13,24 @@ import (
     "time"
 )
 
-// Get configurations form $HOME/.seshrc
-type s3hrc struct {
-    User     string
-    Keyfile  string
-    Password string
-}
-
 func Gets3hrc() (conf map[string]string, err error) {
     conf = make(map[string]string)
     fn := os.Getenv("HOME") + "/.seshrc"
     if _, err = os.Stat(fn); os.IsNotExist(err) {
         return conf, err
     }
-    if buf, err := ioutil.ReadFile(fn); err != nil {
+    if c, err := cfg.ReadConfigFile(fn); err != nil {
         return conf, err
     } else {
-        rc := &s3hrc{}
-        err = json.Unmarshal(buf, rc)
-        if err != nil {
-            return conf, err
+        if user, err := c.GetString("default", "user"); err == nil {
+            conf["user"] = user
         }
-        conf["user"] = rc.User
-        conf["keyfile"] = rc.Keyfile
-        conf["password"] = rc.Password
+        if keyfile, err := c.GetString("default", "keyfile"); err == nil {
+            conf["keyfile"] = keyfile
+        }
+        if password, err := c.GetString("default", "password"); err == nil {
+            conf["password"] = password
+        }
         return conf, err
     }
 }

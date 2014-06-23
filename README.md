@@ -48,9 +48,10 @@ And, if the user of remote host is same as current user, we can just drop `-u` f
 
 #### Configuration file
 
-You can put commonly used user and rsa file in `~/.seshrc`, which is a json file:
+You can put commonly used user and rsa file in `~/.seshrc`, which is a `ini` file:
 
-	{ "User":"jason","Keyfile":"/path/to/rsa"}
+    user = jason
+    keyfile = /path/to/rsa
 	
 Sesh would use this file as preference, so you can input less:
 
