@@ -13,8 +13,8 @@ import (
     "time"
 )
 
-func Gets3hrc() (conf map[string]string, err error) {
-    conf = make(map[string]string)
+func Gets3hrc() (conf map[string]map[string]string, err error) {
+    conf = make(map[string]map[string]string)
     fn := os.Getenv("HOME") + "/.seshrc"
     if _, err = os.Stat(fn); os.IsNotExist(err) {
         return conf, err
@@ -22,14 +22,18 @@ func Gets3hrc() (conf map[string]string, err error) {
     if c, err := cfg.ReadConfigFile(fn); err != nil {
         return conf, err
     } else {
-        if user, err := c.GetString("default", "user"); err == nil {
-            conf["user"] = user
-        }
-        if keyfile, err := c.GetString("default", "keyfile"); err == nil {
-            conf["keyfile"] = keyfile
-        }
-        if password, err := c.GetString("default", "password"); err == nil {
-            conf["password"] = password
+        sections := c.GetSections()
+        for _, sec := range sections {
+            conf[sec] = make(map[string]string)
+            if user, err := c.GetString(sec, "user"); err == nil {
+                conf[sec]["user"] = user
+            }
+            if keyfile, err := c.GetString(sec, "keyfile"); err == nil {
+                conf[sec]["keyfile"] = keyfile
+            }
+            if password, err := c.GetString(sec, "password"); err == nil {
+                conf[sec]["password"] = password
+            }
         }
         return conf, err
     }

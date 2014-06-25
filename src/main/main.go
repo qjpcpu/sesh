@@ -58,23 +58,29 @@ func main() {
 
     // get user
     rc, err := util.Gets3hrc()
+    rc_sec := "default"
     if *user == "" {
         if err == nil {
-            *user = rc["user"]
+            *user = rc[rc_sec]["user"]
         }
         if *user == "" {
             *user = os.Getenv("USER")
         }
+    } else {
+        _, ok := rc[*user]
+        if ok && rc[*user]["user"] == *user {
+            rc_sec = *user
+        }
     }
     // get password
-    if *password == "" && err == nil && *user == rc["user"] && rc["password"] != "" {
-        *password = rc["password"]
+    if *password == "" && err == nil && *user == rc[rc_sec]["user"] && rc[rc_sec]["password"] != "" {
+        *password = rc[rc_sec]["password"]
     }
 
     // get  key file
     if *keyfile == "" {
         if err == nil {
-            *keyfile = rc["keyfile"]
+            *keyfile = rc[rc_sec]["keyfile"]
         }
         if *keyfile == "" {
             *keyfile = os.Getenv("HOME") + "/.ssh/id_rsa"
