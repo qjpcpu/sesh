@@ -6,9 +6,11 @@ import (
     "github.com/cheggaaa/pb"
     cfg "goconf.googlecode.com/hg"
     "io"
+    "io/ioutil"
     "job"
     "os"
     "os/signal"
+    "path/filepath"
     "sssh"
     "time"
 )
@@ -172,4 +174,46 @@ func Interact(config map[string]interface{}, host string) {
     mgr, _ := job.NewManager()
     s3h := sssh.NewS3h(host, user, pwd, keyfile, cmd, printer, mgr)
     s3h.SysLogin()
+}
+func ScpRun(config map[string]interface{}, host_arr []string) error {
+    user, _ := config["User"].(string)
+    pwd, _ := config["Password"].(string)
+    keyfile, _ := config["Keyfile"].(string)
+    src, _ := config["Source"].(string)
+    dest, _ := config["Destdir"].(string)
+
+    perm := "0660"
+    if fi, err := os.Stat(src); err != nil {
+        return err
+    } else {
+        perm = fmt.Sprintf("%#o", fi.Mode())
+    }
+    data, err := ioutil.ReadFile(src)
+    if err != nil {
+        return err
+    }
+    dest = dest + "/" + filepath.Base(src)
+    // Create master, the master is used to manage go routines
+    mgr, _ := job.NewManager()
+    for _, h := range host_arr {
+        scp := sssh.NewScp(h, user, pwd, keyfile, dest, perm, data, mgr)
+        go scp.Work()
+    }
+
+    // When a host is ready and request for continue, the master would echo CONTINUE for response to allow host to run
+    size := len(host_arr)
+    for {
+        data, _ := mgr.Receive(-1)
+        info, _ := data.(map[string]interface{})
+        if info["BODY"].(string) == "BEGIN" {
+            mgr.Send(info["FROM"].(string), map[string]interface{}{"FROM": "MASTER", "BODY": "CONTINUE"})
+        } else if info["BODY"].(string) == "END" {
+            // If master gets every hosts' END message, then it stop waiting.
+            size -= 1
+            if size == 0 {
+                break
+            }
+        }
+    }
+    return nil
 }

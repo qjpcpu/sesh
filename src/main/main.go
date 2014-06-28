@@ -28,6 +28,11 @@ type SeshFlags struct {
     Debug          bool               `goptions:"--debug, description='Print the configurations, not perform tasks'"`
     Cmd            goptions.Remainder `goptions:"description='command'"`
     Help           goptions.Help      `goptions:"--help, description='Show this help'"`
+    goptions.Verbs
+    Sscp struct {
+        Src     string `goptions:"-s,--source,obligatory,description='source file'"`
+        Destdir string `goptions:"-d, --dest, obligatory,description='destination directory'"`
+    }   `goptions:"scp"`
 }
 
 func main() {
@@ -97,6 +102,23 @@ func main() {
                 options.Keyfile = ""
             }
         }
+    }
+
+    // Scp file
+    if options.Sscp.Src != "" && options.Sscp.Destdir != "" {
+        config := map[string]interface{}{
+            "User":     options.User,
+            "Password": options.Password,
+            "Keyfile":  options.Keyfile,
+            "Source":   options.Sscp.Src,
+            "Destdir":  options.Sscp.Destdir,
+        }
+        if err := util.ScpRun(config, host_arr); err != nil {
+            fmt.Println("\033[31mCopy faild!\033[0m")
+        } else {
+            fmt.Println("\033[32mFinished!\033[0m")
+        }
+        return
     }
 
     //check command
