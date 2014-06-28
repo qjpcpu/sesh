@@ -153,4 +153,4 @@ Sesh also support scp
 
 #### Help
 
-	sesh -help
+	sesh --help
