@@ -144,6 +144,13 @@ The main template `main.cmd` invoke the embedded template `who.cmd`. Use `{{defi
 	{{ template "XXX" . }}
 	
 
+#### Remote cp(scp)
+
+Sesh also support scp
+
+    sesh -f hosts scp -s srcfile -d /remote/directory
+
+
 #### Help
 
 	sesh -help
