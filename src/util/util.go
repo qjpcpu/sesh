@@ -182,6 +182,26 @@ func ScpRun(config map[string]interface{}, host_arr []string) error {
     src, _ := config["Source"].(string)
     dest, _ := config["Destdir"].(string)
 
+    animation := make(chan int)
+    animation_on := true
+    go func() {
+        fmt.Print("\033[?25l")
+        b := []string{"-", "\\", "|", "/", "-", "|", "/"}
+        i := 0
+        for {
+            select {
+            case <-animation:
+                fmt.Print("\033[?25h")
+                break
+            case <-time.After(100 * time.Millisecond):
+                i += 1
+                if animation_on {
+                    fmt.Printf("%v\r", b[i%7])
+                }
+            }
+        }
+    }()
+
     perm := "0660"
     if fi, err := os.Stat(src); err != nil {
         return err
@@ -209,6 +229,11 @@ func ScpRun(config map[string]interface{}, host_arr []string) error {
             mgr.Send(info["FROM"].(string), map[string]interface{}{"FROM": "MASTER", "BODY": "CONTINUE"})
         } else if info["BODY"].(string) == "END" {
             // If master gets every hosts' END message, then it stop waiting.
+            if animation_on {
+                animation_on = false
+                animation <- 0
+            }
+            fmt.Print(info["RES"].(string))
             size -= 1
             if size == 0 {
                 break

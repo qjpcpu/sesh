@@ -34,10 +34,11 @@ func NewScp(host, user, password, keyfile, destfile, perm string, data []byte, m
     return
 }
 func (scp *Scp) Work() {
+    res := map[string]interface{}{"FROM": scp.Host, "BODY": "END"}
     if scp.Member != nil {
         scp.Send("MASTER", map[string]interface{}{"FROM": scp.Host, "BODY": "BEGIN", "TAG": scp})
         defer func() {
-            scp.Send("MASTER", map[string]interface{}{"FROM": scp.Host, "BODY": "END"})
+            scp.Send("MASTER", res)
         }()
         // Wait for master's reply
         data, _ := scp.Receive(-1)
@@ -67,18 +68,18 @@ func (scp *Scp) Work() {
             }
             conn, err = Dial("tcp", scp.Host+":22", config)
             if err != nil {
-                fmt.Printf("Unable to connect \033[31m%v\033[0m %v\n", scp.Host, err)
+                res["RES"] = fmt.Sprintf("Unable to connect \033[31m%v\033[0m %v\n", scp.Host, err)
                 return
             }
         } else {
-            fmt.Printf("Unable to connect \033[31m%v\033[0m %v\n", scp.Host, err)
+            res["RES"] = fmt.Sprintf("Unable to connect \033[31m%v\033[0m %v\n", scp.Host, err)
             return
         }
     }
     defer conn.Close()
     session, err := conn.NewSession()
     if err != nil {
-        fmt.Printf("\033[31m%v\033[0m %v\n", scp.Host, err)
+        res["RES"] = fmt.Sprintf("\033[31m%v\033[0m %v\n", scp.Host, err)
         return
     }
     defer session.Close()
@@ -90,8 +91,8 @@ func (scp *Scp) Work() {
         fmt.Fprint(w, "\x00")
     }()
     if err := session.Run("/usr/bin/scp -qrt " + filepath.Dir(scp.Destfile)); err != nil {
-        fmt.Printf("\033[31mFailed to copy to %v!\033[0m\n", scp.Host)
+        res["RES"] = fmt.Sprintf("\033[31mFailed to copy to %v!\033[0m\n", scp.Host)
     } else {
-        fmt.Printf("\033[33m%v\033[0m OK!\n", scp.Host)
+        res["RES"] = fmt.Sprintf("\033[33m%v\033[0m OK!\n", scp.Host)
     }
 }
