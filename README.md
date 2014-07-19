@@ -8,8 +8,7 @@ Sexy ssh makes batch ssh tasks sexy!
 	git clone git@github.com:qjpcpu/sexy-ssh.git
 	cd sexy-ssh
 	export GOPATH=`pwd`
-	go install main
-	mv bin/{main,sesh}
+	go install sesh
 	
 The executable file `bin/sesh` is all you need.
 
