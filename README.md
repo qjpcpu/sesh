@@ -12,11 +12,11 @@ Sexy ssh makes batch ssh tasks sexy!
 	export GOPATH=`pwd`
 	go install sesh
 	
+The executable file `bin/sesh` is all you need.
+
 ### Download binary file
 
     wget --no-check-certificate https://raw.githubusercontent.com/qjpcpu/sexy-ssh/master/bin/sesh
-
-The executable file `bin/sesh` is all you need.
 
 ## Usage
 
