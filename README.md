@@ -5,11 +5,17 @@ Sexy ssh makes batch ssh tasks sexy!
 
 ## Install
 
+### Build from source
+
 	git clone git@github.com:qjpcpu/sexy-ssh.git
 	cd sexy-ssh
 	export GOPATH=`pwd`
 	go install sesh
 	
+### Download binary file
+
+    wget --no-check-certificate https://raw.githubusercontent.com/qjpcpu/sexy-ssh/master/bin/sesh
+
 The executable file `bin/sesh` is all you need.
 
 ## Usage
