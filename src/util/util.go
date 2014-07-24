@@ -46,15 +46,16 @@ func GirlSay(content ...interface{}) string {
 }
 
 // Hook for per task state changed
-func report(output io.Writer, host string, color bool) {
+func report(output io.Writer, prefix, host string, color bool) {
     if color {
-        output.Write([]byte(fmt.Sprintf("\033[33m========== %s ==========\033[0m\n", host)))
+        output.Write([]byte(fmt.Sprintf("\033[33m%s========== %s ==========\033[0m\n", prefix, host)))
     } else {
 
-        output.Write([]byte(fmt.Sprintf("========== %s ==========\n", host)))
+        output.Write([]byte(fmt.Sprintf("%s========== %s ==========\n", prefix, host)))
     }
 }
-func SerialRun(config map[string]interface{}, host_arr []string) error {
+func SerialRun(config map[string]interface{}, raw_host_arr []string, start, end int) error {
+    host_arr := raw_host_arr[start:end]
     user, _ := config["User"].(string)
     pwd, _ := config["Password"].(string)
     keyfile, _ := config["Keyfile"].(string)
@@ -71,11 +72,11 @@ func SerialRun(config map[string]interface{}, host_arr []string) error {
     if printer != os.Stdout {
         bar = pb.StartNew(len(host_arr))
     }
-    for _, h := range host_arr {
+    for index, h := range host_arr {
         s3h := sssh.NewS3h(h, user, pwd, keyfile, cmd, printer, mgr)
         go func() {
             if _, err := mgr.Receive(-1); err == nil {
-                report(s3h.Output, s3h.Host, os.Stdout == printer)
+                report(s3h.Output, fmt.Sprintf("%d/%d ", index+1+start, len(raw_host_arr)), s3h.Host, os.Stdout == printer)
                 mgr.Send(s3h.Host, map[string]interface{}{"FROM": "MASTER", "BODY": "CONTINUE"})
             } else {
                 mgr.Send(s3h.Host, map[string]interface{}{"FROM": "MASTER", "BODY": "STOP"})
@@ -91,7 +92,8 @@ func SerialRun(config map[string]interface{}, host_arr []string) error {
     }
     return nil
 }
-func ParallelRun(config map[string]interface{}, host_arr []string, tmpdir string) error {
+func ParallelRun(config map[string]interface{}, raw_host_arr []string, start, end int, tmpdir string) error {
+    host_arr := raw_host_arr[start:end]
     user, _ := config["User"].(string)
     pwd, _ := config["Password"].(string)
     keyfile, _ := config["Keyfile"].(string)
@@ -140,7 +142,7 @@ func ParallelRun(config map[string]interface{}, host_arr []string, tmpdir string
         data, _ := mgr.Receive(-1)
         info, _ := data.(map[string]interface{})
         if info["BODY"].(string) == "BEGIN" {
-            report(info["TAG"].(*sssh.Sssh).Output, info["TAG"].(*sssh.Sssh).Host, printer == os.Stdout)
+            report(info["TAG"].(*sssh.Sssh).Output, "", info["TAG"].(*sssh.Sssh).Host, printer == os.Stdout)
             mgr.Send(info["FROM"].(string), map[string]interface{}{"FROM": "MASTER", "BODY": "CONTINUE"})
         } else if info["BODY"].(string) == "END" {
             // If master gets every hosts' END message, then it stop waiting.
