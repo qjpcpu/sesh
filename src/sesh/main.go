@@ -114,7 +114,7 @@ func main() {
             "Destdir":  options.Sscp.Destdir,
         }
         if err := util.ScpRun(config, host_arr); err != nil {
-            fmt.Println("\033[31mCopy faild!\033[0m")
+            fmt.Printf("\033[31mCopy faild! %v\033[0m\n", err)
         } else {
             fmt.Println("\033[32mFinished!\033[0m")
         }
