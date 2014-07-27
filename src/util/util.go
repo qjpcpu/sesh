@@ -1,7 +1,9 @@
 package util
 
 import (
+    "code.google.com/p/go.crypto/ssh/terminal"
     "cowsay"
+    "dircat"
     "fmt"
     "github.com/cheggaaa/pb"
     cfg "goconf.googlecode.com/hg"
@@ -136,6 +138,16 @@ func ParallelRun(config map[string]interface{}, raw_host_arr []string, start, en
         go s3h.Work()
     }
 
+    // show realtime view for each host
+    var dc *dircat.DirCat
+    if terminal.IsTerminal(0) && printer == os.Stdout {
+        wlist := []string{}
+        for _, h := range host_arr {
+            wlist = append(wlist, fmt.Sprintf("%s/%s", dir, h))
+        }
+        dc, _ = dircat.Init(wlist...)
+        go dc.Start()
+    }
     // When a host is ready and request for continue, the master would echo CONTINUE for response to allow host to run
     size := len(host_arr)
     for {
@@ -151,6 +163,9 @@ func ParallelRun(config map[string]interface{}, raw_host_arr []string, start, en
                 break
             }
         }
+    }
+    if terminal.IsTerminal(0) && printer == os.Stdout {
+        dc.Stop()
     }
     // close tmp files
     for _, f := range tmpfiles {
