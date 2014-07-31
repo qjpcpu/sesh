@@ -3,7 +3,6 @@ package dircat
 import (
     "fmt"
     "github.com/qjpcpu/gocui"
-    "io/ioutil"
     "os"
     "path/filepath"
     "regexp"
@@ -127,8 +126,10 @@ func Init(filelist ...string) (*DirCat, error) {
 }
 func drawCenter(g *gocui.Gui) {
     if v := g.View("center"); v != nil {
-        if data, err := ioutil.ReadFile(files[file_offset]); err == nil {
-            text := string(data)
+        if text, err := TailBySize(files[file_offset], SizeOf100Lines); err == nil {
+            _, height := g.Size()
+            height = height - 2
+            text = GetLastLines(text, height)
             if i := strings.Index(text, "\n"); i > 0 {
                 re := regexp.MustCompile("\\033[[0-9]+m")
                 line := re.ReplaceAllString(text[0:i], "")
