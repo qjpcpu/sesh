@@ -28,8 +28,12 @@ Use with host file:
 	
 The host-file's format is simple, one host per line, like:
 
-	www.host1.com
-	www.host2.com
+	www.example-host00.com
+	www.example-host01.com
+
+Output is:
+
+![output](https://raw.githubusercontent.com/qjpcpu/sexy-ssh/master/screen_shoot/serial_exec.png)
 
 If the hosts can be counted, you can use `-h` to specify remote hosts, seperated by `,`:
 
@@ -69,6 +73,10 @@ Sesh would execute job for each host serially by default, swith `-r` on for para
 	sesh -f host-file -r 'echo hello'
 	
 Sesh would execute all task by parallel,if you want control the parallel degree, you could use `--parallel-degree`.
+
+Output is:
+
+![output](https://raw.githubusercontent.com/qjpcpu/sexy-ssh/master/screen_shoot/realtime_output.png)
 
 Forexample, if you want execute every 2 hosts by paraallel:
 
