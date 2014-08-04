@@ -55,6 +55,12 @@ And, if the user of remote host is same as current user, we can just drop `-u` f
 
 	sesh -f host-file 'echo hello'
 
+#### Timeout
+
+The default connection timeout is 5 seconds, it can be changed by `--timeout`:
+
+    sesh -f host-file  --timeout 1 'echo hello'
+
 #### Configuration file
 
 You can put commonly used user and rsa file in `~/.seshrc`, which is a `ini` file:
