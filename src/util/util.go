@@ -144,7 +144,7 @@ func ParallelRun(config map[string]interface{}, raw_host_arr []string, start, en
 
     // show realtime view for each host
     var dc *dircat.DirCat
-    if terminal.IsTerminal(0) && printer == os.Stdout {
+    if terminal.IsTerminal(1) && printer == os.Stdout {
         wlist := []string{}
         for _, h := range host_arr {
             wlist = append(wlist, fmt.Sprintf("%s/%s", dir, h))
@@ -168,7 +168,7 @@ func ParallelRun(config map[string]interface{}, raw_host_arr []string, start, en
             }
         }
     }
-    if terminal.IsTerminal(0) && printer == os.Stdout {
+    if terminal.IsTerminal(1) && printer == os.Stdout {
         dc.Stop()
     }
     // close tmp files
