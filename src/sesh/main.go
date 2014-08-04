@@ -201,7 +201,7 @@ func main() {
         host_offset = 1
     }
     if options.Parallel {
-        fmt.Println(util.GirlSay("  Please wait me for a moment, Baby!  "))
+        fmt.Fprintln(os.Stderr, util.GirlSay("  Please wait me for a moment, Baby!  "))
         end := len(host_arr)
         if options.ParallelDegree < 1 || options.ParallelDegree > (end-host_offset) {
             options.ParallelDegree = end - host_offset
