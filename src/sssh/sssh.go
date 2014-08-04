@@ -20,6 +20,7 @@ type Sssh struct {
     Output   io.Writer
     Cmd      string
     Host     string
+    Timeout  int
     *job.Member
 }
 
@@ -32,6 +33,7 @@ func NewS3h(host, user, password, keyfile, cmd string, output io.Writer, mgr *jo
         output,
         cmd,
         host,
+        5,
         m,
     }
     return
@@ -70,15 +72,17 @@ func (s3h *Sssh) Work() {
         }
     }
     config := &ClientConfig{
-        User: s3h.User,
-        Auth: auths,
+        User:    s3h.User,
+        Auth:    auths,
+        Timeout: s3h.Timeout,
     }
     conn, err := Dial("tcp", s3h.Host+":22", config)
     if err != nil {
         if s3h.Password != "" && strings.Contains(err.Error(), "unable to authenticate, attempted methods [none publickey]") {
             config = &ClientConfig{
-                User: s3h.User,
-                Auth: []AuthMethod{Password(s3h.Password)},
+                User:    s3h.User,
+                Auth:    []AuthMethod{Password(s3h.Password)},
+                Timeout: s3h.Timeout,
             }
             conn, err = Dial("tcp", s3h.Host+":22", config)
             if err != nil {
@@ -113,8 +117,9 @@ func (s3h *Sssh) Login() {
         }
     }
     config := &ClientConfig{
-        User: s3h.User,
-        Auth: auths,
+        User:    s3h.User,
+        Auth:    auths,
+        Timeout: s3h.Timeout,
     }
     conn, err := Dial("tcp", s3h.Host+":22", config)
     if err != nil {

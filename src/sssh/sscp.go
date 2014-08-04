@@ -16,6 +16,7 @@ type Scp struct {
     Destfile string
     Perm     string
     Data     []byte
+    Timeout  int
     *job.Member
 }
 
@@ -29,6 +30,7 @@ func NewScp(host, user, password, keyfile, destfile, perm string, data []byte, m
         destfile,
         perm,
         data,
+        5,
         m,
     }
     return
@@ -56,8 +58,9 @@ func (scp *Scp) Work() {
         }
     }
     config := &ClientConfig{
-        User: scp.User,
-        Auth: auths,
+        User:    scp.User,
+        Auth:    auths,
+        Timeout: scp.Timeout,
     }
     conn, err := Dial("tcp", scp.Host+":22", config)
     if err != nil {

@@ -63,6 +63,7 @@ func SerialRun(config map[string]interface{}, raw_host_arr []string, start, end 
     keyfile, _ := config["Keyfile"].(string)
     cmd, _ := config["Cmd"].(string)
     args, _ := config["Args"].(string)
+    timeout, _ := config["Timeout"].(int)
     // Format command
     cmd = format_cmd(cmd, args)
     printer, _ := config["Output"].(io.Writer)
@@ -76,6 +77,7 @@ func SerialRun(config map[string]interface{}, raw_host_arr []string, start, end 
     }
     for index, h := range host_arr {
         s3h := sssh.NewS3h(h, user, pwd, keyfile, cmd, printer, mgr)
+        s3h.Timeout = timeout
         go func() {
             if _, err := mgr.Receive(-1); err == nil {
                 report(s3h.Output, fmt.Sprintf("%d/%d ", index+1+start, len(raw_host_arr)), s3h.Host, os.Stdout == printer)
@@ -101,6 +103,7 @@ func ParallelRun(config map[string]interface{}, raw_host_arr []string, start, en
     keyfile, _ := config["Keyfile"].(string)
     cmd, _ := config["Cmd"].(string)
     args, _ := config["Args"].(string)
+    timeout, _ := config["Timeout"].(int)
     cmd = format_cmd(cmd, args)
     printer, _ := config["Output"].(io.Writer)
 
@@ -135,6 +138,7 @@ func ParallelRun(config map[string]interface{}, raw_host_arr []string, start, en
         file, _ := os.Create(fmt.Sprintf("%s/%s", dir, h))
         tmpfiles = append(tmpfiles, file)
         s3h := sssh.NewS3h(h, user, pwd, keyfile, cmd, file, mgr)
+        s3h.Timeout = timeout
         go s3h.Work()
     }
 
@@ -196,6 +200,7 @@ func ScpRun(config map[string]interface{}, host_arr []string) error {
     user, _ := config["User"].(string)
     pwd, _ := config["Password"].(string)
     keyfile, _ := config["Keyfile"].(string)
+    timeout, _ := config["Timeout"].(int)
     src, _ := config["Source"].(string)
     dest, _ := config["Destdir"].(string)
 
@@ -234,6 +239,7 @@ func ScpRun(config map[string]interface{}, host_arr []string) error {
     mgr, _ := job.NewManager()
     for _, h := range host_arr {
         scp := sssh.NewScp(h, user, pwd, keyfile, dest, perm, data, mgr)
+        scp.Timeout = timeout
         go scp.Work()
     }
 

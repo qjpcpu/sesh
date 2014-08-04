@@ -24,6 +24,7 @@ type SeshFlags struct {
     Arguments      string             `goptions:"--args, description='args for script'"`
     Parallel       bool               `goptions:"-r, --rapid, description='Parallel execution'"`
     ParallelDegree int                `goptions:"--parallel-degree, description='Parallel degree, default is the size of hosts'"`
+    Timeout        int                `goptions:"--timeout, description='ssh connection timeout seconds, default is 5'"`
     Pause          bool               `goptions:"--check, description='Pause after first host done'"`
     Debug          bool               `goptions:"--debug, description='Print the configurations, not perform tasks'"`
     Cmd            goptions.Remainder `goptions:"description='command'"`
@@ -45,6 +46,10 @@ func main() {
     }
     goptions.ParseAndFail(&options)
 
+    //timeout
+    if options.Timeout < 1 {
+        options.Timeout = 5
+    }
     // get hosts
     var host_arr []string
     if options.Hostfile != "" {
@@ -112,6 +117,7 @@ func main() {
             "Keyfile":  options.Keyfile,
             "Source":   options.Sscp.Src,
             "Destdir":  options.Sscp.Destdir,
+            "Timeout":  options.Timeout,
         }
         if err := util.ScpRun(config, host_arr); err != nil {
             fmt.Printf("\033[31mCopy faild! %v\033[0m\n", err)
@@ -176,6 +182,7 @@ func main() {
         "Cmd":      cmd,
         "Args":     options.Arguments,
         "Output":   printer,
+        "Timeout":  options.Timeout,
     }
     if options.Debug {
         printDebugInfo(options, host_arr, cmd)
