@@ -27,15 +27,15 @@ type Sssh struct {
 func NewS3h(host, user, password, keyfile, cmd string, output io.Writer, mgr *job.Member) (s3h *Sssh) {
     m, _ := mgr.NewMember(host)
     s3h = &Sssh{
-        user,
-        password,
-        keyfile,
-        output,
-        cmd,
-        host,
-        5,
-        m,
+        User:     user,
+        Password: password,
+        Keyfile:  keyfile,
+        Output:   output,
+        Cmd:      cmd,
+        Host:     host,
+        Timeout:  5,
     }
+    s3h.Member = m
     return
 }
 func getkey(file string) (key Signer, err error) {
