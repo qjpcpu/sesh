@@ -52,14 +52,14 @@ func getkey(file string) (key Signer, err error) {
 }
 func (s3h *Sssh) Work() {
     if s3h.Member != nil {
-        s3h.Send("MASTER", map[string]interface{}{"FROM": s3h.Host, "BODY": "BEGIN", "TAG": s3h})
+        s3h.Send(job.MASTER_ID, map[string]interface{}{"FROM": s3h.Host, "BODY": "BEGIN", "TAG": s3h})
         defer func() {
-            s3h.Send("MASTER", map[string]interface{}{"FROM": s3h.Host, "BODY": "END"})
+            s3h.Send(job.MASTER_ID, map[string]interface{}{"FROM": s3h.Host, "BODY": "END"})
         }()
         // Wait for master's reply
         data, _ := s3h.Receive(-1)
         info, _ := data.(map[string]interface{})
-        if info["FROM"].(string) != "MASTER" && info["BODY"].(string) != "CONTINUE" {
+        if info["FROM"].(string) != job.MASTER_ID || info["BODY"].(string) != "CONTINUE" {
             return
         }
     }

@@ -63,12 +63,14 @@ type Member struct {
     poster *MessagePool
 }
 
+const MASTER_ID = "__MASTER__MEMBER__"
+
 func NewManager() (*Member, error) {
     mp := NewMessagePool()
-    if err := mp.SetupMailFor("MASTER"); err != nil {
+    if err := mp.SetupMailFor(MASTER_ID); err != nil {
         return nil, err
     }
-    return &Member{"MASTER", mp}, nil
+    return &Member{MASTER_ID, mp}, nil
 }
 func (mgr *Member) NewMember(id string) (*Member, error) {
     m := &Member{
@@ -87,8 +89,8 @@ func (m *Member) Broadcast(data interface{}) {
         }
     }
 }
-func (m *Member) Send(to string, data interface{}) {
-    m.poster.Send(to, data)
+func (m *Member) Send(to string, data interface{}) error {
+    return m.poster.Send(to, data)
 }
 func (m *Member) Receive(timeout int) (msg interface{}, err error) {
     msg, err = m.poster.Receive(m.Id, timeout)

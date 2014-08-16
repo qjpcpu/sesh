@@ -81,9 +81,9 @@ func SerialRun(config map[string]interface{}, raw_host_arr []string, start, end 
         go func() {
             if _, err := mgr.Receive(-1); err == nil {
                 report(s3h.Output, fmt.Sprintf("%d/%d ", index+1+start, len(raw_host_arr)), s3h.Host, os.Stdout == printer)
-                mgr.Send(s3h.Host, map[string]interface{}{"FROM": "MASTER", "BODY": "CONTINUE"})
+                mgr.Send(s3h.Host, map[string]interface{}{"FROM": job.MASTER_ID, "BODY": "CONTINUE"})
             } else {
-                mgr.Send(s3h.Host, map[string]interface{}{"FROM": "MASTER", "BODY": "STOP"})
+                mgr.Send(s3h.Host, map[string]interface{}{"FROM": job.MASTER_ID, "BODY": "STOP"})
             }
         }()
         if printer != os.Stdout {
@@ -159,7 +159,7 @@ func ParallelRun(config map[string]interface{}, raw_host_arr []string, start, en
         info, _ := data.(map[string]interface{})
         if info["BODY"].(string) == "BEGIN" {
             report(info["TAG"].(*sssh.Sssh).Output, "", info["TAG"].(*sssh.Sssh).Host, printer == os.Stdout)
-            mgr.Send(info["FROM"].(string), map[string]interface{}{"FROM": "MASTER", "BODY": "CONTINUE"})
+            mgr.Send(info["FROM"].(string), map[string]interface{}{"FROM": job.MASTER_ID, "BODY": "CONTINUE"})
         } else if info["BODY"].(string) == "END" {
             // If master gets every hosts' END message, then it stop waiting.
             size -= 1
@@ -249,7 +249,7 @@ func ScpRun(config map[string]interface{}, host_arr []string) error {
         data, _ := mgr.Receive(-1)
         info, _ := data.(map[string]interface{})
         if info["BODY"].(string) == "BEGIN" {
-            mgr.Send(info["FROM"].(string), map[string]interface{}{"FROM": "MASTER", "BODY": "CONTINUE"})
+            mgr.Send(info["FROM"].(string), map[string]interface{}{"FROM": job.MASTER_ID, "BODY": "CONTINUE"})
         } else if info["BODY"].(string) == "END" {
             // If master gets every hosts' END message, then it stop waiting.
             if animation_on {

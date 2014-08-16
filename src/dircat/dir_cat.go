@@ -126,10 +126,9 @@ func Init(filelist ...string) (*DirCat, error) {
 }
 func drawCenter(g *gocui.Gui) {
     if v := g.View("center"); v != nil {
-        if text, err := TailBySize(files[file_offset], SizeOf100Lines); err == nil {
-            _, height := g.Size()
-            height = height - 2
-            text = GetLastLines(text, height)
+        _, height := g.Size()
+        height = height - 2
+        if text, err := TailFile(files[file_offset], height); err == nil {
             if i := strings.Index(text, "\n"); i > 0 {
                 re := regexp.MustCompile("\\033[[0-9]+m")
                 line := re.ReplaceAllString(text[0:i], "")
