@@ -38,14 +38,14 @@ func NewScp(host, user, password, keyfile, destfile, perm string, data []byte, m
 func (scp *Scp) Work() {
     res := map[string]interface{}{"FROM": scp.Host, "BODY": "END"}
     if scp.Member != nil {
-        scp.Send("MASTER", map[string]interface{}{"FROM": scp.Host, "BODY": "BEGIN", "TAG": scp})
+        scp.Send(job.MASTER_ID, map[string]interface{}{"FROM": scp.Host, "BODY": "BEGIN", "TAG": scp})
         defer func() {
-            scp.Send("MASTER", res)
+            scp.Send(job.MASTER_ID, res)
         }()
         // Wait for master's reply
         data, _ := scp.Receive(-1)
         info, _ := data.(map[string]interface{})
-        if info["FROM"].(string) != "MASTER" && info["BODY"].(string) != "CONTINUE" {
+        if info["FROM"].(string) != job.MASTER_ID && info["BODY"].(string) != "CONTINUE" {
             return
         }
     }
