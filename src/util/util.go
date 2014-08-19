@@ -5,7 +5,6 @@ import (
     "cowsay"
     "dircat"
     "fmt"
-    "github.com/cheggaaa/pb"
     cfg "goconf.googlecode.com/hg"
     "io"
     "io/ioutil"
@@ -52,7 +51,6 @@ func report(output io.Writer, prefix, host string, color bool) {
     if color {
         output.Write([]byte(fmt.Sprintf("\033[33m%s========== %s ==========\033[0m\n", prefix, host)))
     } else {
-
         output.Write([]byte(fmt.Sprintf("%s========== %s ==========\n", prefix, host)))
     }
 }
@@ -67,32 +65,22 @@ func SerialRun(config map[string]interface{}, raw_host_arr []string, start, end 
     // Format command
     cmd = format_cmd(cmd, args)
     printer, _ := config["Output"].(io.Writer)
+    err_printer, _ := config["Errout"].(io.Writer)
 
     mgr, _ := job.NewManager()
 
-    //Setup progress bar if the output is not os.Stdout
-    var bar *pb.ProgressBar
-    if printer != os.Stdout {
-        bar = pb.StartNew(len(host_arr))
-    }
     for index, h := range host_arr {
-        s3h := sssh.NewS3h(h, user, pwd, keyfile, cmd, printer, mgr)
+        s3h := sssh.NewS3h(h, user, pwd, keyfile, cmd, printer, err_printer, mgr)
         s3h.Timeout = timeout
         go func() {
             if _, err := mgr.Receive(-1); err == nil {
-                report(s3h.Output, fmt.Sprintf("%d/%d ", index+1+start, len(raw_host_arr)), s3h.Host, os.Stdout == printer)
+                report(err_printer, fmt.Sprintf("%d/%d ", index+1+start, len(raw_host_arr)), s3h.Host, true)
                 mgr.Send(s3h.Host, map[string]interface{}{"FROM": job.MASTER_ID, "BODY": "CONTINUE"})
             } else {
                 mgr.Send(s3h.Host, map[string]interface{}{"FROM": job.MASTER_ID, "BODY": "STOP"})
             }
         }()
-        if printer != os.Stdout {
-            bar.Increment()
-        }
         s3h.Work()
-    }
-    if printer != os.Stdout {
-        bar.FinishPrint("")
     }
     return nil
 }
@@ -106,6 +94,7 @@ func ParallelRun(config map[string]interface{}, raw_host_arr []string, start, en
     timeout, _ := config["Timeout"].(int)
     cmd = format_cmd(cmd, args)
     printer, _ := config["Output"].(io.Writer)
+    err_printer, _ := config["Errout"].(io.Writer)
 
     // Create master, the master is used to manage go routines
     mgr, _ := job.NewManager()
@@ -115,8 +104,6 @@ func ParallelRun(config map[string]interface{}, raw_host_arr []string, start, en
         return err
     }
 
-    // Print cowsay wait
-    //fmt.Println(girlSay("  Please wait me for a moment, Baby!  "))
     // Listen interrupt and kill signal, clear tmp files before exit.
     intqueue := make(chan os.Signal, 1)
     signal.Notify(intqueue, os.Interrupt, os.Kill)
@@ -136,15 +123,16 @@ func ParallelRun(config map[string]interface{}, raw_host_arr []string, start, en
     var tmpfiles []*os.File
     for _, h := range host_arr {
         file, _ := os.Create(fmt.Sprintf("%s/%s", dir, h))
-        tmpfiles = append(tmpfiles, file)
-        s3h := sssh.NewS3h(h, user, pwd, keyfile, cmd, file, mgr)
+        err_file, _ := os.Create(fmt.Sprintf("%s/%s.err", dir, h))
+        tmpfiles = append(tmpfiles, file, err_file)
+        s3h := sssh.NewS3h(h, user, pwd, keyfile, cmd, file, err_file, mgr)
         s3h.Timeout = timeout
         go s3h.Work()
     }
 
     // show realtime view for each host
     var dc *dircat.DirCat
-    if terminal.IsTerminal(1) && printer == os.Stdout {
+    if terminal.IsTerminal(1) {
         wlist := []string{}
         for _, h := range host_arr {
             wlist = append(wlist, fmt.Sprintf("%s/%s", dir, h))
@@ -158,7 +146,6 @@ func ParallelRun(config map[string]interface{}, raw_host_arr []string, start, en
         data, _ := mgr.Receive(-1)
         info, _ := data.(map[string]interface{})
         if info["BODY"].(string) == "BEGIN" {
-            report(info["TAG"].(*sssh.Sssh).Output, "", info["TAG"].(*sssh.Sssh).Host, printer == os.Stdout)
             mgr.Send(info["FROM"].(string), map[string]interface{}{"FROM": job.MASTER_ID, "BODY": "CONTINUE"})
         } else if info["BODY"].(string) == "END" {
             // If master gets every hosts' END message, then it stop waiting.
@@ -168,7 +155,7 @@ func ParallelRun(config map[string]interface{}, raw_host_arr []string, start, en
             }
         }
     }
-    if terminal.IsTerminal(1) && printer == os.Stdout {
+    if terminal.IsTerminal(1) {
         dc.Stop()
     }
     // close tmp files
@@ -177,10 +164,19 @@ func ParallelRun(config map[string]interface{}, raw_host_arr []string, start, en
     }
     // Merge all the hosts' output to the output file
     for _, h := range host_arr {
+        report(os.Stderr, "", h, true)
+        // copy err output first
+        err_fn := fmt.Sprintf("%s/%s.err", dir, h)
+        err_src, _ := os.Open(err_fn)
+        io.Copy(err_printer, err_src)
+        err_src.Close()
+        // copy output then
         fn := fmt.Sprintf("%s/%s", dir, h)
         src, _ := os.Open(fn)
         io.Copy(printer, src)
         src.Close()
+        // remove tmp file
+        os.Remove(err_fn)
         os.Remove(fn)
     }
     return nil
@@ -191,9 +187,10 @@ func Interact(config map[string]interface{}, host string) {
     keyfile, _ := config["Keyfile"].(string)
     cmd, _ := config["Cmd"].(string)
     printer, _ := config["Output"].(io.Writer)
+    err_printer, _ := config["Errout"].(io.Writer)
 
     mgr, _ := job.NewManager()
-    s3h := sssh.NewS3h(host, user, pwd, keyfile, cmd, printer, mgr)
+    s3h := sssh.NewS3h(host, user, pwd, keyfile, cmd, printer, err_printer, mgr)
     s3h.SysLogin()
 }
 func ScpRun(config map[string]interface{}, host_arr []string) error {

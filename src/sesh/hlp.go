@@ -24,11 +24,6 @@ func printDebugInfo(options SeshFlags, hosts []string, cmd string) {
     fmt.Printf("\033[32mUser:\033[0m %v\n", options.User)
     fmt.Printf("\033[32mKeyfile:\033[0m %v\n", options.Keyfile)
     fmt.Printf("\033[32mPassword:\033[0m %v\n", options.Password)
-    if options.Outfile != "" {
-        fmt.Printf("\033[32mOutput:\033[0m %v\n", options.Outfile)
-    } else {
-        fmt.Printf("\033[32mOutput:\033[0m Stdout\n")
-    }
     fmt.Printf("\033[32mHosts:\033[0m %v\n", hosts)
     fmt.Printf("\033[32mComands:\033[0m\n%v\n", cmd)
     if options.Parallel {

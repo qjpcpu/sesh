@@ -88,11 +88,6 @@ Forexample, if you want execute every 2 hosts by paraallel:
 
     sesh -f host-file -r --parallel-degree 2 'echo hello'
 
-#### Save output
-
-Sesh would print remote output to screen by default, but you can save output to file
-	
-	sesh -f host-file -o result 'echo hello'
 	
 #### Check for sure
 

@@ -17,7 +17,6 @@ type SeshFlags struct {
     User           string             `goptions:"-u, --user, description='USER, user name'"`
     Password       string             `goptions:"-p, --password, description='PASSWORD'"`
     Keyfile        string             `goptions:"-k, --key, description='ssh auth file'"`
-    Outfile        string             `goptions:"-o, --output, description='OUTFILE, Save output to file'"`
     Cmdfile        []string           `goptions:"-c, --command-file, description='CMD_FILE, Command file'"`
     Tmpdir         string             `goptions:"-t, --tmp-directory, description='TMP_DIRECTORY, Specify tmp directory'"`
     Data           string             `goptions:"-d, --data, description='the name would be replace according name=value pair in command or command file. The name format in command should be {{ .name }}'"`
@@ -54,7 +53,7 @@ func main() {
     var host_arr []string
     if options.Hostfile != "" {
         if buf, err := ioutil.ReadFile(options.Hostfile); err != nil {
-            fmt.Println("\033[31mFailed to read host from file!\033[0m")
+            fmt.Fprintln(os.Stderr, "\033[31mFailed to read host from file!\033[0m")
             return
         } else {
             hoststr := string(buf)
@@ -64,7 +63,7 @@ func main() {
         host_arr = parseHostsFromString(options.Hostlist)
     } else {
         if terminal.IsTerminal(0) {
-            fmt.Println("\033[33mPlease input hosts, seperated by LINE SEPERATOR, press Ctrl+D to finish input:\033[0m")
+            fmt.Fprintln(os.Stderr, "\033[33mPlease input hosts, seperated by LINE SEPERATOR, press Ctrl+D to finish input:\033[0m")
         }
         buf, _ := ioutil.ReadAll(os.Stdin)
         host_arr = parseHostsFromString(string(buf))
@@ -101,7 +100,7 @@ func main() {
         }
         if _, err := os.Stat(options.Keyfile); os.IsNotExist(err) {
             if options.Password == "" {
-                fmt.Println("\033[31mKey file " + options.Keyfile + " not found!\033[0m")
+                fmt.Fprintln(os.Stderr, "\033[31mKey file "+options.Keyfile+" not found!\033[0m")
                 return
             } else {
                 options.Keyfile = ""
@@ -120,16 +119,16 @@ func main() {
             "Timeout":  options.Timeout,
         }
         if err := util.ScpRun(config, host_arr); err != nil {
-            fmt.Printf("\033[31mCopy faild! %v\033[0m\n", err)
+            fmt.Fprintf(os.Stderr, "\033[31mCopy faild! %v\033[0m\n", err)
         } else {
-            fmt.Println("\033[32mFinished!\033[0m")
+            fmt.Fprintln(os.Stderr, "\033[32mFinished!\033[0m")
         }
         return
     }
 
     //check command
     if len(options.Cmd) == 0 && len(options.Cmdfile) == 0 {
-        fmt.Println("\033[31mPlese specify command you want execute.\033[0m")
+        fmt.Fprintln(os.Stderr, "\033[31mPlese specify command you want execute.\033[0m")
         return
     }
     // parse command template
@@ -137,12 +136,12 @@ func main() {
     if len(options.Cmdfile) > 0 {
         for _, cf := range options.Cmdfile {
             if _, err := os.Stat(cf); os.IsNotExist(err) {
-                fmt.Println("\033[31mCommand file " + cf + " not found!\033[0m")
+                fmt.Fprintln(os.Stderr, "\033[31mCommand file "+cf+" not found!\033[0m")
                 return
             }
         }
         if o, err := templ.ParseFromFiles(options.Cmdfile, parseData(options.Data)); err != nil {
-            fmt.Printf("\033[31mParse command file failed!\033[0m\n%v\n", err)
+            fmt.Fprintf(os.Stderr, "\033[31mParse command file failed!\033[0m\n%v\n", err)
             return
         } else {
             cmd = o
@@ -153,35 +152,26 @@ func main() {
             cmd = cmd + v + " "
         }
         if o, err := templ.ParseFromString(cmd, parseData(options.Data)); err != nil {
-            fmt.Printf("\033[31mParse command failed!\033[0m\n%v\n", err)
+            fmt.Fprintf(os.Stderr, "\033[31mParse command failed!\033[0m\n%v\n", err)
             return
         } else {
             cmd = o
         }
     }
     if _, err := os.Stat(options.Tmpdir); os.IsNotExist(err) && options.Parallel {
-        fmt.Println("\033[31mTemporary directory " + options.Tmpdir + " is not exist!\033[0m")
+        fmt.Fprintln(os.Stderr, "\033[31mTemporary directory "+options.Tmpdir+" is not exist!\033[0m")
         return
     }
 
     // Begin to run
-    printer := os.Stdout
-    if options.Outfile != "" {
-        if output, err := os.Create(options.Outfile); err != nil {
-            fmt.Println("\033[31mCan't create " + options.Outfile + "!\033[0m")
-            return
-        } else {
-            printer = output
-            defer printer.Close()
-        }
-    }
     config := map[string]interface{}{
         "User":     options.User,
         "Password": options.Password,
         "Keyfile":  options.Keyfile,
         "Cmd":      cmd,
         "Args":     options.Arguments,
-        "Output":   printer,
+        "Output":   os.Stdout,
+        "Errout":   os.Stderr,
         "Timeout":  options.Timeout,
     }
     if options.Debug {
@@ -191,11 +181,11 @@ func main() {
     host_offset := 0
     if options.Pause {
         util.SerialRun(config, host_arr, host_offset, 1)
-        fmt.Printf("The task on \033[33m%s\033[0m has done.\nPress any key to auto login \033[33m%s\033[0m to have a check...", host_arr[0], host_arr[0])
+        fmt.Fprintf(os.Stderr, "The task on \033[33m%s\033[0m has done.\nPress any key to auto login \033[33m%s\033[0m to have a check...", host_arr[0], host_arr[0])
         reader := bufio.NewReader(os.Stdin)
         reader.ReadString('\n')
         util.Interact(config, host_arr[0])
-        fmt.Printf("\n\033[32mCheck completed! Press any key to acomplish the left tasks.\033[0m")
+        fmt.Fprintf(os.Stderr, "\n\033[32mCheck completed! Press any key to acomplish the left tasks.\033[0m")
         reader = bufio.NewReader(os.Stdin)
         reader.ReadString('\n')
         host_offset = 1
@@ -221,5 +211,5 @@ func main() {
         util.SerialRun(config, host_arr, host_offset, len(host_arr))
     }
 
-    fmt.Println("\033[32mFinished!\033[0m")
+    fmt.Fprintln(os.Stderr, "\033[32mFinished!\033[0m")
 }

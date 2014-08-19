@@ -18,19 +18,21 @@ type Sssh struct {
     Password string
     Keyfile  string
     Output   io.Writer
+    Errout   io.Writer
     Cmd      string
     Host     string
     Timeout  int
     *job.Member
 }
 
-func NewS3h(host, user, password, keyfile, cmd string, output io.Writer, mgr *job.Member) (s3h *Sssh) {
+func NewS3h(host, user, password, keyfile, cmd string, output, err_out io.Writer, mgr *job.Member) (s3h *Sssh) {
     m, _ := mgr.NewMember(host)
     s3h = &Sssh{
         User:     user,
         Password: password,
         Keyfile:  keyfile,
         Output:   output,
+        Errout:   err_out,
         Cmd:      cmd,
         Host:     host,
         Timeout:  5,
@@ -86,18 +88,18 @@ func (s3h *Sssh) Work() {
             }
             conn, err = Dial("tcp", s3h.Host+":22", config)
             if err != nil {
-                fmt.Fprintln(s3h.Output, "unable to connect: ", err.Error())
+                fmt.Fprintln(s3h.Errout, "unable to connect: ", err.Error())
                 return
             }
         } else {
-            fmt.Fprintln(s3h.Output, "unable to connect: ", err.Error())
+            fmt.Fprintln(s3h.Errout, "unable to connect: ", err.Error())
             return
         }
     }
     defer conn.Close()
     session, err := conn.NewSession()
     if err != nil {
-        fmt.Fprintln(s3h.Output, "Failed to create session: "+err.Error())
+        fmt.Fprintln(s3h.Errout, "Failed to create session: "+err.Error())
         return
     }
     defer session.Close()
@@ -123,13 +125,13 @@ func (s3h *Sssh) Login() {
     }
     conn, err := Dial("tcp", s3h.Host+":22", config)
     if err != nil {
-        fmt.Fprintln(s3h.Output, "unable to connect: ", err.Error())
+        fmt.Fprintln(s3h.Errout, "unable to connect: ", err.Error())
         return
     }
     defer conn.Close()
     session, err := conn.NewSession()
     if err != nil {
-        fmt.Fprintln(s3h.Output, "Failed to create session: "+err.Error())
+        fmt.Fprintln(s3h.Errout, "Failed to create session: "+err.Error())
         return
     }
     defer session.Close()
@@ -147,13 +149,13 @@ func (s3h *Sssh) Login() {
 
     // Request pseudo terminal
     if err := session.RequestPty("xterm", 80, 200, modes); err != nil {
-        fmt.Println("request for pseudo terminal failed: %s", err)
+        fmt.Fprintln(s3h.Errout, "request for pseudo terminal failed: %s", err)
         return
     }
 
     // Start remote shell
     if err := session.Shell(); err != nil {
-        fmt.Println("failed to start shell: %s", err)
+        fmt.Fprintln(s3h.Errout, "failed to start shell: %s", err)
         return
     }
 
@@ -194,7 +196,7 @@ func (s3h *Sssh) SysLogin() {
     cmd.Stderr = os.Stderr
     err := cmd.Run()
     if err != nil {
-        fmt.Fprintln(s3h.Output, err.Error())
+        fmt.Fprintln(s3h.Errout, err.Error())
         return
     }
 }
