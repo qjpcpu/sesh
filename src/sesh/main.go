@@ -20,7 +20,7 @@ type SeshFlags struct {
     Cmdfile        []string           `goptions:"-c, --command-file, description='CMD_FILE, Command file'"`
     Tmpdir         string             `goptions:"-t, --tmp-directory, description='TMP_DIRECTORY, Specify tmp directory'"`
     Data           string             `goptions:"-d, --data, description='the name would be replace according name=value pair in command or command file. The name format in command should be {{ .name }}'"`
-    Arguments      string             `goptions:"--args, description='args for script'"`
+	Arguments      string             `goptions:"--exec, description='how to exec script in remote, use {} stands for scriptname'"`
     Parallel       bool               `goptions:"-r, --rapid, description='Parallel execution'"`
     ParallelDegree int                `goptions:"--parallel-degree, description='Parallel degree, default is the size of hosts'"`
     Timeout        int                `goptions:"--timeout, description='ssh connection timeout seconds, default is 5'"`

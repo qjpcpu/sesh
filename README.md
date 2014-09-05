@@ -107,6 +107,22 @@ Use `-c` to specity command file:
 
 	sesh -f host-list -c keygen.cmd
 	
+If the script needs arguments, the `--exec` might help.
+Note: the first symbol `{}`	represents the script file name.
+
+    sesh -f host-list  -c myscript.cmd  --exec 'sh {} hello'
+
+the content of myscript.cmd is `echo "say $1"`, so the output would be `say hello`.
+
+If the script starts with shibang `#!`, forexample, a ruby file `test.rb` is:
+
+    #!/usr/bin/ruby
+    puts "say "+ARGV.to_s
+
+You can run sesh like this:
+
+    sesh -f host-list -c test.rb --exec '{} hello'
+
 #### Command template
 
 You can embedded parameter in command or command file with `{{ .name }}`, then invoke sesh with `-d`, for example, there is a command file `enter-today-dir.cmd`:
@@ -130,7 +146,7 @@ This is a ruby script `x.rb`:
     
 Now the sesh would be:
 
-	sesh -f hosts -c x.rb --args "hello"
+	sesh -f hosts -c x.rb --exec "{} hello"
 
 #### Embedded command template
 
