@@ -60,7 +60,9 @@ func (scp *Scp) Work() {
     }
     auths := []AuthMethod{
         Password(scp.Password),
-        ssh_agent(),
+    }
+    if os.Getenv("SSH_AUTH_SOCK") != "" {
+        auths = append(auths, ssh_agent())
     }
     if scp.Keyfile != "" {
         if key, err := getkey(scp.Keyfile); err == nil {

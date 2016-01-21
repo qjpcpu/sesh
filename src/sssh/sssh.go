@@ -75,8 +75,10 @@ func (s3h *Sssh) Work() {
     }
 	auths := []AuthMethod{
 		Password(s3h.Password),
-        ssh_agent(),
 	}
+    if os.Getenv("SSH_AUTH_SOCK") != "" {
+        auths = append(auths, ssh_agent())
+    }
 	if s3h.Keyfile != "" {
 		if key, err := getkey(s3h.Keyfile); err == nil {
 			auths = append(auths, PublicKeys(key))
@@ -125,9 +127,10 @@ func (s3h *Sssh) Login() {
     }
 	auths := []AuthMethod{
 		Password(s3h.Password),
-        ssh_agent(),
 	}
-
+    if os.Getenv("SSH_AUTH_SOCK") != "" {
+        auths = append(auths, ssh_agent())
+    }
 	if s3h.Keyfile != "" {
 		if key, err := getkey(s3h.Keyfile); err == nil {
 			auths = append(auths, PublicKeys(key))
