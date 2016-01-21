@@ -2,7 +2,7 @@ package dircat
 
 import (
     "fmt"
-    "github.com/qjpcpu/gocui"
+    "gocui"
     "os"
     "path/filepath"
     "regexp"
