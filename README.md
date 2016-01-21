@@ -16,7 +16,10 @@ The executable file `bin/sesh` is all you need.
 
 ### Download binary file
 
-    wget --no-check-certificate https://raw.githubusercontent.com/qjpcpu/sexy-ssh/master/bin/sesh
+    # for linux
+    wget --no-check-certificate https://raw.githubusercontent.com/qjpcpu/sexy-ssh/master/bin/sesh.linux -O sesh
+    # for mac
+    wget --no-check-certificate https://raw.githubusercontent.com/qjpcpu/sexy-ssh/master/bin/sesh.osx -O sesh
 
 ## Usage
 
