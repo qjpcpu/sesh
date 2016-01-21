@@ -1,11 +1,14 @@
 package sssh
 
 import (
-    . "code.google.com/p/go.crypto/ssh"
+    . "golang.org/x/crypto/ssh"
+    "golang.org/x/crypto/ssh/agent"
+    "os"
     "fmt"
     "job"
     "path/filepath"
     "strings"
+    "net"
 )
 
 type Scp struct {
@@ -49,8 +52,15 @@ func (scp *Scp) Work() {
             return
         }
     }
+    ssh_agent := func() AuthMethod {
+        if sshAgent, err := net.Dial("unix", os.Getenv("SSH_AUTH_SOCK")); err == nil {
+            return PublicKeysCallback(agent.NewClient(sshAgent).Signers)
+        }
+        return nil
+    }
     auths := []AuthMethod{
         Password(scp.Password),
+        ssh_agent(),
     }
     if scp.Keyfile != "" {
         if key, err := getkey(scp.Keyfile); err == nil {
@@ -60,7 +70,6 @@ func (scp *Scp) Work() {
     config := &ClientConfig{
         User:    scp.User,
         Auth:    auths,
-        Timeout: scp.Timeout,
     }
     conn, err := Dial("tcp", scp.Host+":22", config)
     if err != nil {

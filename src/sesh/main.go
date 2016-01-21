@@ -2,7 +2,7 @@ package main
 
 import (
     "bufio"
-    "code.google.com/p/go.crypto/ssh/terminal"
+    "golang.org/x/crypto/ssh/terminal"
     "fmt"
     "github.com/voxelbrain/goptions"
     "io/ioutil"
