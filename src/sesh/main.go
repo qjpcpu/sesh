@@ -100,7 +100,7 @@ func main() {
         }
         if _, err := os.Stat(options.Keyfile); os.IsNotExist(err) {
             if options.Password == "" {
-                fmt.Fprintln(os.Stderr, "\033[31mKey file "+options.Keyfile+" not found!\033[0m")
+                //fmt.Fprintln(os.Stderr, "\033[31mKey file "+options.Keyfile+" not found!\033[0m")
                 return
             } else {
                 options.Keyfile = ""
