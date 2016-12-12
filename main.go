@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/voxelbrain/goptions"
-	"golang.org/x/crypto/ssh/terminal"
+	"sesh/golang.org/x/crypto/ssh/terminal"
 	"io/ioutil"
 	"net"
 	"os"

@@ -3,8 +3,8 @@ package sssh
 import (
 	"bufio"
 	"fmt"
-	. "golang.org/x/crypto/ssh"
-	"golang.org/x/crypto/ssh/agent"
+	. "sesh/golang.org/x/crypto/ssh"
+	"sesh/golang.org/x/crypto/ssh/agent"
 	"io"
 	"io/ioutil"
 	"sesh/job"

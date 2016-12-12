@@ -1,7 +1,7 @@
 package util
 
 import (
-    "golang.org/x/crypto/ssh/terminal"
+    "sesh/golang.org/x/crypto/ssh/terminal"
     "sesh/cowsay"
     "sesh/dircat"
     "fmt"

@@ -1,8 +1,8 @@
 package sssh
 
 import (
-    . "golang.org/x/crypto/ssh"
-    "golang.org/x/crypto/ssh/agent"
+    . "sesh/golang.org/x/crypto/ssh"
+    "sesh/golang.org/x/crypto/ssh/agent"
     "os"
     "fmt"
     "sesh/job"
