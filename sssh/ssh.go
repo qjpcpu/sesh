@@ -7,7 +7,7 @@ import (
 	"golang.org/x/crypto/ssh/agent"
 	"io"
 	"io/ioutil"
-	"job"
+	"sesh/job"
 	"os"
 	"os/exec"
 	"os/signal"

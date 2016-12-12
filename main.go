@@ -8,8 +8,8 @@ import (
 	"io/ioutil"
 	"net"
 	"os"
-	"templ"
-	"util"
+	"sesh/templ"
+	"sesh/util"
 )
 
 type SeshFlags struct {

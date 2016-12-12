@@ -5,7 +5,7 @@ import (
     "golang.org/x/crypto/ssh/agent"
     "os"
     "fmt"
-    "job"
+    "sesh/job"
     "path/filepath"
     "strings"
     "net"

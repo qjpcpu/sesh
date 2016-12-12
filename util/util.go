@@ -2,17 +2,17 @@ package util
 
 import (
     "golang.org/x/crypto/ssh/terminal"
-    "cowsay"
-    "dircat"
+    "sesh/cowsay"
+    "sesh/dircat"
     "fmt"
-    cfg "goconf.googlecode.com/hg"
+    cfg "sesh/goconf.googlecode.com/hg"
     "io"
     "io/ioutil"
-    "job"
+    "sesh/job"
     "os"
     "os/signal"
     "path/filepath"
-    "sssh"
+    "sesh/sssh"
     "time"
 )
 
