@@ -3,16 +3,16 @@ package sssh
 import (
 	"bufio"
 	"fmt"
-	. "sesh/golang.org/x/crypto/ssh"
-	"sesh/golang.org/x/crypto/ssh/agent"
+	. "github.com/qjpcpu/sesh/golang.org/x/crypto/ssh"
+	"github.com/qjpcpu/sesh/golang.org/x/crypto/ssh/agent"
+	"github.com/qjpcpu/sesh/job"
 	"io"
 	"io/ioutil"
-	"sesh/job"
+	"net"
 	"os"
 	"os/exec"
 	"os/signal"
 	"strings"
-    "net"
 )
 
 type Sssh struct {
@@ -67,33 +67,33 @@ func (s3h *Sssh) Work() {
 			return
 		}
 	}
-    ssh_agent := func() AuthMethod {
-        if sshAgent, err := net.Dial("unix", os.Getenv("SSH_AUTH_SOCK")); err == nil {
-            return PublicKeysCallback(agent.NewClient(sshAgent).Signers)
-        }
-        return nil
-    }
+	ssh_agent := func() AuthMethod {
+		if sshAgent, err := net.Dial("unix", os.Getenv("SSH_AUTH_SOCK")); err == nil {
+			return PublicKeysCallback(agent.NewClient(sshAgent).Signers)
+		}
+		return nil
+	}
 	auths := []AuthMethod{
 		Password(s3h.Password),
 	}
-    if os.Getenv("SSH_AUTH_SOCK") != "" {
-        auths = append(auths, ssh_agent())
-    }
+	if os.Getenv("SSH_AUTH_SOCK") != "" {
+		auths = append(auths, ssh_agent())
+	}
 	if s3h.Keyfile != "" {
 		if key, err := getkey(s3h.Keyfile); err == nil {
 			auths = append(auths, PublicKeys(key))
 		}
 	}
 	config := &ClientConfig{
-		User:    s3h.User,
-		Auth:    auths,
+		User: s3h.User,
+		Auth: auths,
 	}
 	conn, err := Dial("tcp", s3h.Host+":22", config)
 	if err != nil {
 		if s3h.Password != "" && strings.Contains(err.Error(), "unable to authenticate, attempted methods [none publickey]") {
 			config = &ClientConfig{
-				User:    s3h.User,
-				Auth:    []AuthMethod{Password(s3h.Password)},
+				User: s3h.User,
+				Auth: []AuthMethod{Password(s3h.Password)},
 			}
 			conn, err = Dial("tcp", s3h.Host+":22", config)
 			if err != nil {
@@ -119,26 +119,26 @@ func (s3h *Sssh) Work() {
 }
 
 func (s3h *Sssh) Login() {
-    ssh_agent := func() AuthMethod {
-        if sshAgent, err := net.Dial("unix", os.Getenv("SSH_AUTH_SOCK")); err == nil {
-            return PublicKeysCallback(agent.NewClient(sshAgent).Signers)
-        }
-        return nil
-    }
+	ssh_agent := func() AuthMethod {
+		if sshAgent, err := net.Dial("unix", os.Getenv("SSH_AUTH_SOCK")); err == nil {
+			return PublicKeysCallback(agent.NewClient(sshAgent).Signers)
+		}
+		return nil
+	}
 	auths := []AuthMethod{
 		Password(s3h.Password),
 	}
-    if os.Getenv("SSH_AUTH_SOCK") != "" {
-        auths = append(auths, ssh_agent())
-    }
+	if os.Getenv("SSH_AUTH_SOCK") != "" {
+		auths = append(auths, ssh_agent())
+	}
 	if s3h.Keyfile != "" {
 		if key, err := getkey(s3h.Keyfile); err == nil {
 			auths = append(auths, PublicKeys(key))
 		}
 	}
 	config := &ClientConfig{
-		User:    s3h.User,
-		Auth:    auths,
+		User: s3h.User,
+		Auth: auths,
 	}
 	conn, err := Dial("tcp", s3h.Host+":22", config)
 	if err != nil {
