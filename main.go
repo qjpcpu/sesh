@@ -3,13 +3,13 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"github.com/qjpcpu/sesh/golang.org/x/crypto/ssh/terminal"
+	"github.com/qjpcpu/sesh/templ"
+	"github.com/qjpcpu/sesh/util"
 	"github.com/voxelbrain/goptions"
-	"sesh/golang.org/x/crypto/ssh/terminal"
 	"io/ioutil"
 	"net"
 	"os"
-	"sesh/templ"
-	"sesh/util"
 )
 
 type SeshFlags struct {
@@ -100,13 +100,13 @@ func main() {
 		}
 		if _, err := os.Stat(options.Keyfile); os.IsNotExist(err) {
 			if options.Password == "" {
-                if os.Getenv("SSH_AUTH_SOCK") == "" {
-                    fmt.Fprintln(os.Stderr, "\033[31mKey file "+options.Keyfile+" not found!\033[0m")
-                    return
-                }
+				if os.Getenv("SSH_AUTH_SOCK") == "" {
+					fmt.Fprintln(os.Stderr, "\033[31mKey file "+options.Keyfile+" not found!\033[0m")
+					return
+				}
 				if _, err := net.Dial("unix", os.Getenv("SSH_AUTH_SOCK")); err != nil {
 					fmt.Fprintln(os.Stderr, "\033[31mKey file "+options.Keyfile+" not found!\033[0m")
-                    return
+					return
 				}
 			} else {
 				options.Keyfile = ""
