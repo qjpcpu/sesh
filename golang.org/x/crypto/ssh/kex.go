@@ -14,7 +14,7 @@ import (
 	"io"
 	"math/big"
 
-	"sesh/golang.org/x/crypto/curve25519"
+	"github.com/qjpcpu/sesh/golang.org/x/crypto/curve25519"
 )
 
 const (

@@ -3,7 +3,7 @@
 // license that can be found in the LICENSE file.
 
 // Package openpgp implements high level operations on OpenPGP messages.
-package openpgp // import "sesh/golang.org/x/crypto/openpgp"
+package openpgp // import "github.com/qjpcpu/sesh/golang.org/x/crypto/openpgp"
 
 import (
 	"crypto"
@@ -12,9 +12,9 @@ import (
 	"io"
 	"strconv"
 
-	"sesh/golang.org/x/crypto/openpgp/armor"
-	"sesh/golang.org/x/crypto/openpgp/errors"
-	"sesh/golang.org/x/crypto/openpgp/packet"
+	"github.com/qjpcpu/sesh/golang.org/x/crypto/openpgp/armor"
+	"github.com/qjpcpu/sesh/golang.org/x/crypto/openpgp/errors"
+	"github.com/qjpcpu/sesh/golang.org/x/crypto/openpgp/packet"
 )
 
 // SignatureType is the armor type for a PGP signature.

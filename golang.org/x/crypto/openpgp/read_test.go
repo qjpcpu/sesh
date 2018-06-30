@@ -13,7 +13,7 @@ import (
 	"strings"
 	"testing"
 
-	"sesh/golang.org/x/crypto/openpgp/errors"
+	"github.com/qjpcpu/sesh/golang.org/x/crypto/openpgp/errors"
 )
 
 func readerFromHex(s string) io.Reader {

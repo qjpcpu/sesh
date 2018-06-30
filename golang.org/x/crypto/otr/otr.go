@@ -4,7 +4,7 @@
 
 // Package otr implements the Off The Record protocol as specified in
 // http://www.cypherpunks.ca/otr/Protocol-v2-3.1.0.html
-package otr // import "sesh/golang.org/x/crypto/otr"
+package otr // import "github.com/qjpcpu/sesh/golang.org/x/crypto/otr"
 
 import (
 	"bytes"

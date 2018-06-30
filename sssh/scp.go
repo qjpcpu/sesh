@@ -2,8 +2,8 @@ package sssh
 
 import (
 	"fmt"
-	. "github.com/qjpcpu/github.com/qjpcpu/sesh/golang.org/x/crypto/ssh"
-	"github.com/qjpcpu/github.com/qjpcpu/sesh/golang.org/x/crypto/ssh/agent"
+	. "github.com/qjpcpu/sesh/golang.org/x/crypto/ssh"
+	"github.com/qjpcpu/sesh/golang.org/x/crypto/ssh/agent"
 	"github.com/qjpcpu/sesh/job"
 	"net"
 	"os"

@@ -8,7 +8,7 @@ import (
 	"crypto/cipher"
 	"crypto/sha1"
 	"crypto/subtle"
-	"sesh/golang.org/x/crypto/openpgp/errors"
+	"github.com/qjpcpu/sesh/golang.org/x/crypto/openpgp/errors"
 	"hash"
 	"io"
 	"strconv"

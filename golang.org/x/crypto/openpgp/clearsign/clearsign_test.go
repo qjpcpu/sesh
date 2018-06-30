@@ -6,7 +6,7 @@ package clearsign
 
 import (
 	"bytes"
-	"sesh/golang.org/x/crypto/openpgp"
+	"github.com/qjpcpu/sesh/golang.org/x/crypto/openpgp"
 	"testing"
 )
 

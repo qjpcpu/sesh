@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"sesh/golang.org/x/crypto/openpgp/packet"
+	"github.com/qjpcpu/sesh/golang.org/x/crypto/openpgp/packet"
 )
 
 func TestSignDetached(t *testing.T) {

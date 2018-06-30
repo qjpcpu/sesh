@@ -2,7 +2,7 @@ package dircat
 
 import (
     "fmt"
-    "sesh/gocui"
+    "github.com/qjpcpu/sesh/gocui"
     "os"
     "path/filepath"
     "regexp"

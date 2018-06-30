@@ -12,7 +12,7 @@ import (
 	"encoding/asn1"
 	"errors"
 
-	"sesh/golang.org/x/crypto/pkcs12/internal/rc2"
+	"github.com/qjpcpu/sesh/golang.org/x/crypto/pkcs12/internal/rc2"
 )
 
 var (

@@ -15,12 +15,12 @@ negligible risk of collision.
 
 This package is interoperable with NaCl: http://nacl.cr.yp.to/box.html.
 */
-package box // import "sesh/golang.org/x/crypto/nacl/box"
+package box // import "github.com/qjpcpu/sesh/golang.org/x/crypto/nacl/box"
 
 import (
-	"sesh/golang.org/x/crypto/curve25519"
-	"sesh/golang.org/x/crypto/nacl/secretbox"
-	"sesh/golang.org/x/crypto/salsa20/salsa"
+	"github.com/qjpcpu/sesh/golang.org/x/crypto/curve25519"
+	"github.com/qjpcpu/sesh/golang.org/x/crypto/nacl/secretbox"
+	"github.com/qjpcpu/sesh/golang.org/x/crypto/salsa20/salsa"
 	"io"
 )
 

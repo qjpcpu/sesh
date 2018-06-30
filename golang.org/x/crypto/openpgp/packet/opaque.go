@@ -9,7 +9,7 @@ import (
 	"io"
 	"io/ioutil"
 
-	"sesh/golang.org/x/crypto/openpgp/errors"
+	"github.com/qjpcpu/sesh/golang.org/x/crypto/openpgp/errors"
 )
 
 // OpaquePacket represents an OpenPGP packet as raw, unparsed data. This is
