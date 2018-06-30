@@ -10,8 +10,8 @@ import (
 	"bytes"
 	"testing"
 
-	"sesh/golang.org/x/crypto/ssh"
-	"sesh/golang.org/x/crypto/ssh/agent"
+	"github.com/qjpcpu/sesh/golang.org/x/crypto/ssh"
+	"github.com/qjpcpu/sesh/golang.org/x/crypto/ssh/agent"
 )
 
 func TestAgentForward(t *testing.T) {

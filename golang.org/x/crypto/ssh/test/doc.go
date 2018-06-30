@@ -3,5 +3,5 @@
 // license that can be found in the LICENSE file.
 
 // This package contains integration tests for the
-// sesh/golang.org/x/crypto/ssh package.
-package test // import "sesh/golang.org/x/crypto/ssh/test"
+// github.com/qjpcpu/sesh/golang.org/x/crypto/ssh package.
+package test // import "github.com/qjpcpu/sesh/golang.org/x/crypto/ssh/test"

@@ -5,7 +5,7 @@ import (
 	"github.com/qjpcpu/sesh/cowsay"
 	"github.com/qjpcpu/sesh/dircat"
 	cfg "github.com/qjpcpu/sesh/goconf.googlecode.com/hg"
-	"github.com/qjpcpu/sesh/golang.org/x/crypto/ssh/terminal"
+	"github.com/qjpcpu/github.com/qjpcpu/sesh/golang.org/x/crypto/ssh/terminal"
 	"github.com/qjpcpu/sesh/job"
 	"github.com/qjpcpu/sesh/sssh"
 	"io"

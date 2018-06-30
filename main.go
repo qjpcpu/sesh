@@ -3,7 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"github.com/qjpcpu/sesh/golang.org/x/crypto/ssh/terminal"
+	"github.com/qjpcpu/github.com/qjpcpu/sesh/golang.org/x/crypto/ssh/terminal"
 	"github.com/qjpcpu/sesh/templ"
 	"github.com/qjpcpu/sesh/util"
 	"github.com/voxelbrain/goptions"

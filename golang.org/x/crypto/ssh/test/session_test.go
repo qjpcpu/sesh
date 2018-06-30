@@ -15,7 +15,7 @@ import (
 	"strings"
 	"testing"
 
-	"sesh/golang.org/x/crypto/ssh"
+	"github.com/qjpcpu/sesh/golang.org/x/crypto/ssh"
 )
 
 func TestRunCommandSuccess(t *testing.T) {
