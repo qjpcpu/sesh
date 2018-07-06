@@ -6,7 +6,6 @@ import (
 	"github.com/qjpcpu/sesh/dircat"
 	cfg "github.com/qjpcpu/sesh/goconf.googlecode.com/hg"
 	"github.com/qjpcpu/sesh/golang.org/x/crypto/ssh/terminal"
-	"github.com/qjpcpu/sesh/job"
 	"github.com/qjpcpu/sesh/sssh"
 	"io"
 	"os"
@@ -55,6 +54,7 @@ func report(output io.Writer, prefix, host string, color bool) {
 		output.Write([]byte(fmt.Sprintf("%s========== %s ==========\n", prefix, host)))
 	}
 }
+
 func SerialRun(config map[string]interface{}, raw_host_arr []string, start, end int) error {
 	host_arr := raw_host_arr[start:end]
 	user, _ := config["User"].(string)
@@ -68,23 +68,18 @@ func SerialRun(config map[string]interface{}, raw_host_arr []string, start, end 
 	printer, _ := config["Output"].(io.Writer)
 	err_printer, _ := config["Errout"].(io.Writer)
 
-	mgr, _ := job.NewManager()
+	wg := new(sync.WaitGroup)
 
 	for index, h := range host_arr {
-		s3h := sssh.NewS3h(h, user, pwd, keyfile, cmd, printer, err_printer, mgr)
+		s3h := sssh.NewS3h(h, user, pwd, keyfile, cmd, printer, err_printer, wg)
 		s3h.Timeout = timeout
-		go func() {
-			if _, err := mgr.Receive(-1); err == nil {
-				report(err_printer, fmt.Sprintf("%d/%d ", index+1+start, len(raw_host_arr)), s3h.Host, true)
-				mgr.Send(s3h.Host, map[string]interface{}{"FROM": job.MASTER_ID, "BODY": "CONTINUE"})
-			} else {
-				mgr.Send(s3h.Host, map[string]interface{}{"FROM": job.MASTER_ID, "BODY": "STOP"})
-			}
-		}()
+		report(err_printer, fmt.Sprintf("%d/%d ", index+1+start, len(raw_host_arr)), s3h.Host, true)
 		s3h.Work()
 	}
+	wg.Wait()
 	return nil
 }
+
 func ParallelRun(config map[string]interface{}, raw_host_arr []string, start, end int, tmpdir string) error {
 	host_arr := raw_host_arr[start:end]
 	user, _ := config["User"].(string)
@@ -98,7 +93,7 @@ func ParallelRun(config map[string]interface{}, raw_host_arr []string, start, en
 	err_printer, _ := config["Errout"].(io.Writer)
 
 	// Create master, the master is used to manage go routines
-	mgr, _ := job.NewManager()
+	wg := new(sync.WaitGroup)
 	// Setup tmp directory for tmp files
 	dir := fmt.Sprintf("%s/.s3h.%d", tmpdir, time.Now().Nanosecond())
 	if err := os.Mkdir(dir, os.ModeDir|os.ModePerm); err != nil {
@@ -126,7 +121,7 @@ func ParallelRun(config map[string]interface{}, raw_host_arr []string, start, en
 		file, _ := os.Create(fmt.Sprintf("%s/%s", dir, h))
 		err_file, _ := os.Create(fmt.Sprintf("%s/%s.err", dir, h))
 		tmpfiles = append(tmpfiles, file, err_file)
-		s3h := sssh.NewS3h(h, user, pwd, keyfile, cmd, file, err_file, mgr)
+		s3h := sssh.NewS3h(h, user, pwd, keyfile, cmd, file, err_file, wg)
 		s3h.Timeout = timeout
 		go s3h.Work()
 	}
@@ -142,20 +137,8 @@ func ParallelRun(config map[string]interface{}, raw_host_arr []string, start, en
 		go dc.Start()
 	}
 	// When a host is ready and request for continue, the master would echo CONTINUE for response to allow host to run
-	size := len(host_arr)
-	for {
-		data, _ := mgr.Receive(-1)
-		info, _ := data.(map[string]interface{})
-		if info["BODY"].(string) == "BEGIN" {
-			mgr.Send(info["FROM"].(string), map[string]interface{}{"FROM": job.MASTER_ID, "BODY": "CONTINUE"})
-		} else if info["BODY"].(string) == "END" {
-			// If master gets every hosts' END message, then it stop waiting.
-			size -= 1
-			if size == 0 {
-				break
-			}
-		}
-	}
+	wg.Wait()
+
 	if terminal.IsTerminal(1) {
 		dc.Stop()
 	}
@@ -190,8 +173,8 @@ func Interact(config map[string]interface{}, host string) {
 	printer, _ := config["Output"].(io.Writer)
 	err_printer, _ := config["Errout"].(io.Writer)
 
-	mgr, _ := job.NewManager()
-	s3h := sssh.NewS3h(host, user, pwd, keyfile, cmd, printer, err_printer, mgr)
+	wg := new(sync.WaitGroup)
+	s3h := sssh.NewS3h(host, user, pwd, keyfile, cmd, printer, err_printer, wg)
 	s3h.SysLogin()
 }
 
@@ -210,11 +193,11 @@ func ScpRun(config map[string]interface{}, host_arr []string) error {
 			defer wg.Done()
 			cmdstr := fmt.Sprintf(`rsync -azh %s %s@%s:%s`, src, user, host, dest)
 			cmd := exec.Command("/bin/bash", "-c", cmdstr)
-			fmt.Fprintf(os.Stderr, "================= %s =================\n", host)
+			fmt.Fprintf(os.Stderr, "Start sync to  %s......\n", host)
 			if err := cmd.Run(); err != nil {
-				fmt.Fprintf(os.Stderr, "Copy to %s:%s fail:%v\n", host, dest, err)
+				fmt.Fprintf(os.Stderr, "Sync to %s:%s fail:%v\n", host, dest, err)
 			} else {
-				fmt.Fprintf(os.Stderr, "Copy to %s:%s OK\n", host, dest)
+				fmt.Fprintf(os.Stderr, "Sync to %s:%s OK\n", host, dest)
 			}
 		}(h)
 	}

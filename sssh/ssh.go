@@ -3,9 +3,8 @@ package sssh
 import (
 	"bufio"
 	"fmt"
-	. "github.com/qjpcpu/sesh/golang.org/x/crypto/ssh"
+	"github.com/qjpcpu/sesh/golang.org/x/crypto/ssh"
 	"github.com/qjpcpu/sesh/golang.org/x/crypto/ssh/agent"
-	"github.com/qjpcpu/sesh/job"
 	"io"
 	"io/ioutil"
 	"net"
@@ -13,6 +12,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"strings"
+	"sync"
 )
 
 type Sssh struct {
@@ -24,11 +24,11 @@ type Sssh struct {
 	Cmd      string
 	Host     string
 	Timeout  int
-	*job.Member
+	*sync.WaitGroup
 }
 
-func NewS3h(host, user, password, keyfile, cmd string, output, err_out io.Writer, mgr *job.Member) (s3h *Sssh) {
-	m, _ := mgr.NewMember(host)
+func NewS3h(host, user, password, keyfile, cmd string, output, err_out io.Writer, wg *sync.WaitGroup) (s3h *Sssh) {
+	wg.Add(1)
 	s3h = &Sssh{
 		User:     user,
 		Password: password,
@@ -39,15 +39,16 @@ func NewS3h(host, user, password, keyfile, cmd string, output, err_out io.Writer
 		Host:     host,
 		Timeout:  5,
 	}
-	s3h.Member = m
+	s3h.WaitGroup = wg
 	return
 }
-func getkey(file string) (key Signer, err error) {
+
+func getkey(file string) (key ssh.Signer, err error) {
 	buf, err := ioutil.ReadFile(file)
 	if err != nil {
 		return
 	}
-	key, err = ParsePrivateKey(buf)
+	key, err = ssh.ParsePrivateKey(buf)
 	if err != nil {
 		return
 	}
@@ -55,47 +56,38 @@ func getkey(file string) (key Signer, err error) {
 
 }
 func (s3h *Sssh) Work() {
-	if s3h.Member != nil {
-		s3h.Send(job.MASTER_ID, map[string]interface{}{"FROM": s3h.Host, "BODY": "BEGIN", "TAG": s3h})
-		defer func() {
-			s3h.Send(job.MASTER_ID, map[string]interface{}{"FROM": s3h.Host, "BODY": "END"})
-		}()
-		// Wait for master's reply
-		data, _ := s3h.Receive(-1)
-		info, _ := data.(map[string]interface{})
-		if info["FROM"].(string) != job.MASTER_ID || info["BODY"].(string) != "CONTINUE" {
-			return
-		}
+	if s3h.WaitGroup != nil {
+		defer s3h.Done()
 	}
-	ssh_agent := func() AuthMethod {
+	ssh_agent := func() ssh.AuthMethod {
 		if sshAgent, err := net.Dial("unix", os.Getenv("SSH_AUTH_SOCK")); err == nil {
-			return PublicKeysCallback(agent.NewClient(sshAgent).Signers)
+			return ssh.PublicKeysCallback(agent.NewClient(sshAgent).Signers)
 		}
 		return nil
 	}
-	auths := []AuthMethod{
-		Password(s3h.Password),
+	auths := []ssh.AuthMethod{
+		ssh.Password(s3h.Password),
 	}
 	if os.Getenv("SSH_AUTH_SOCK") != "" {
 		auths = append(auths, ssh_agent())
 	}
 	if s3h.Keyfile != "" {
 		if key, err := getkey(s3h.Keyfile); err == nil {
-			auths = append(auths, PublicKeys(key))
+			auths = append(auths, ssh.PublicKeys(key))
 		}
 	}
-	config := &ClientConfig{
+	config := &ssh.ClientConfig{
 		User: s3h.User,
 		Auth: auths,
 	}
-	conn, err := Dial("tcp", s3h.Host+":22", config)
+	conn, err := ssh.Dial("tcp", s3h.Host+":22", config)
 	if err != nil {
 		if s3h.Password != "" && strings.Contains(err.Error(), "unable to authenticate, attempted methods [none publickey]") {
-			config = &ClientConfig{
+			config = &ssh.ClientConfig{
 				User: s3h.User,
-				Auth: []AuthMethod{Password(s3h.Password)},
+				Auth: []ssh.AuthMethod{ssh.Password(s3h.Password)},
 			}
-			conn, err = Dial("tcp", s3h.Host+":22", config)
+			conn, err = ssh.Dial("tcp", s3h.Host+":22", config)
 			if err != nil {
 				fmt.Fprintln(s3h.Errout, "unable to connect: ", err.Error())
 				return
@@ -119,28 +111,28 @@ func (s3h *Sssh) Work() {
 }
 
 func (s3h *Sssh) Login() {
-	ssh_agent := func() AuthMethod {
+	ssh_agent := func() ssh.AuthMethod {
 		if sshAgent, err := net.Dial("unix", os.Getenv("SSH_AUTH_SOCK")); err == nil {
-			return PublicKeysCallback(agent.NewClient(sshAgent).Signers)
+			return ssh.PublicKeysCallback(agent.NewClient(sshAgent).Signers)
 		}
 		return nil
 	}
-	auths := []AuthMethod{
-		Password(s3h.Password),
+	auths := []ssh.AuthMethod{
+		ssh.Password(s3h.Password),
 	}
 	if os.Getenv("SSH_AUTH_SOCK") != "" {
 		auths = append(auths, ssh_agent())
 	}
 	if s3h.Keyfile != "" {
 		if key, err := getkey(s3h.Keyfile); err == nil {
-			auths = append(auths, PublicKeys(key))
+			auths = append(auths, ssh.PublicKeys(key))
 		}
 	}
-	config := &ClientConfig{
+	config := &ssh.ClientConfig{
 		User: s3h.User,
 		Auth: auths,
 	}
-	conn, err := Dial("tcp", s3h.Host+":22", config)
+	conn, err := ssh.Dial("tcp", s3h.Host+":22", config)
 	if err != nil {
 		fmt.Fprintln(s3h.Errout, "unable to connect: ", err.Error())
 		return
@@ -158,10 +150,10 @@ func (s3h *Sssh) Login() {
 	in, _ := session.StdinPipe()
 
 	// Set up terminal modes
-	modes := TerminalModes{
-		ECHO:          0,     // disable echoing
-		TTY_OP_ISPEED: 14400, // input speed = 14.4kbaud
-		TTY_OP_OSPEED: 14400, // output speed = 14.4kbaud
+	modes := ssh.TerminalModes{
+		ssh.ECHO:          0,     // disable echoing
+		ssh.TTY_OP_ISPEED: 14400, // input speed = 14.4kbaud
+		ssh.TTY_OP_OSPEED: 14400, // output speed = 14.4kbaud
 	}
 
 	// Request pseudo terminal
@@ -184,7 +176,7 @@ func (s3h *Sssh) Login() {
 		for {
 			select {
 			case <-c:
-				session.Signal(SIGINT)
+				session.Signal(ssh.SIGINT)
 				fmt.Println("")
 			case <-qc:
 				signal.Stop(c)
@@ -200,6 +192,9 @@ func (s3h *Sssh) Login() {
 	qc <- "Quit signal monitor"
 }
 func (s3h *Sssh) SysLogin() {
+	if s3h.WaitGroup != nil {
+		defer s3h.Done()
+	}
 	str := "ssh " + s3h.User + "@" + s3h.Host
 	if s3h.Keyfile != "" {
 		str = str + " -i " + s3h.Keyfile
