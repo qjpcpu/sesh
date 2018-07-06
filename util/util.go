@@ -9,10 +9,11 @@ import (
 	"github.com/qjpcpu/sesh/job"
 	"github.com/qjpcpu/sesh/sssh"
 	"io"
-	"io/ioutil"
 	"os"
+	"os/exec"
 	"os/signal"
-	"path/filepath"
+	"strings"
+	"sync"
 	"time"
 )
 
@@ -193,72 +194,31 @@ func Interact(config map[string]interface{}, host string) {
 	s3h := sssh.NewS3h(host, user, pwd, keyfile, cmd, printer, err_printer, mgr)
 	s3h.SysLogin()
 }
+
 func ScpRun(config map[string]interface{}, host_arr []string) error {
 	user, _ := config["User"].(string)
-	pwd, _ := config["Password"].(string)
-	keyfile, _ := config["Keyfile"].(string)
-	timeout, _ := config["Timeout"].(int)
+	//keyfile, _ := config["Keyfile"].(string)
 	src, _ := config["Source"].(string)
 	dest, _ := config["Destdir"].(string)
-
-	animation := make(chan int)
-	animation_on := true
-	go func() {
-		fmt.Print("\033[?25l")
-		b := []string{"-", "\\", "|", "/", "-", "|", "/"}
-		i := 0
-		for {
-			select {
-			case <-animation:
-				fmt.Print("\033[?25h")
-				break
-			case <-time.After(100 * time.Millisecond):
-				i += 1
-				if animation_on {
-					fmt.Printf("%v\r", b[i%7])
-				}
-			}
-		}
-	}()
-
-	perm := "0660"
-	if fi, err := os.Stat(src); err != nil {
-		return err
-	} else {
-		perm = fmt.Sprintf("%#o", fi.Mode())
+	if !strings.HasSuffix(dest, "/") {
+		dest += "/"
 	}
-	data, err := ioutil.ReadFile(src)
-	if err != nil {
-		return err
-	}
-	dest = dest + "/" + filepath.Base(src)
-	// Create master, the master is used to manage go routines
-	mgr, _ := job.NewManager()
+	wg := new(sync.WaitGroup)
 	for _, h := range host_arr {
-		scp := sssh.NewScp(h, user, pwd, keyfile, dest, perm, data, mgr)
-		scp.Timeout = timeout
-		go scp.Work()
+		wg.Add(1)
+		go func(host string) {
+			defer wg.Done()
+			cmdstr := fmt.Sprintf(`rsync -azh %s %s@%s:%s`, src, user, host, dest)
+			cmd := exec.Command("/bin/bash", "-c", cmdstr)
+			fmt.Fprintf(os.Stderr, "================= %s =================\n", host)
+			if err := cmd.Run(); err != nil {
+				fmt.Fprintf(os.Stderr, "Copy to %s:%s fail:%v\n", host, dest, err)
+			} else {
+				fmt.Fprintf(os.Stderr, "Copy to %s:%s OK\n", host, dest)
+			}
+		}(h)
 	}
 
-	// When a host is ready and request for continue, the master would echo CONTINUE for response to allow host to run
-	size := len(host_arr)
-	for {
-		data, _ := mgr.Receive(-1)
-		info, _ := data.(map[string]interface{})
-		if info["BODY"].(string) == "BEGIN" {
-			mgr.Send(info["FROM"].(string), map[string]interface{}{"FROM": job.MASTER_ID, "BODY": "CONTINUE"})
-		} else if info["BODY"].(string) == "END" {
-			// If master gets every hosts' END message, then it stop waiting.
-			if animation_on {
-				animation_on = false
-				animation <- 0
-			}
-			fmt.Print(info["RES"].(string))
-			size -= 1
-			if size == 0 {
-				break
-			}
-		}
-	}
+	wg.Wait()
 	return nil
 }
