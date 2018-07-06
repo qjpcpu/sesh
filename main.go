@@ -123,6 +123,7 @@ func main() {
 			"Source":   options.Sscp.Src,
 			"Destdir":  options.Sscp.Destdir,
 			"Timeout":  options.Timeout,
+			"Parallel": options.Parallel,
 		}
 		if err := util.ScpRun(config, host_arr); err != nil {
 			fmt.Fprintf(os.Stderr, "\033[31mCopy faild! %v\033[0m\n", err)

@@ -181,6 +181,7 @@ func Interact(config map[string]interface{}, host string) {
 func ScpRun(config map[string]interface{}, host_arr []string) error {
 	user, _ := config["User"].(string)
 	//keyfile, _ := config["Keyfile"].(string)
+	parallel, ok := config["Parallel"].(bool)
 	src, _ := config["Source"].(string)
 	dest, _ := config["Destdir"].(string)
 	if !strings.HasSuffix(dest, "/") {
@@ -189,7 +190,7 @@ func ScpRun(config map[string]interface{}, host_arr []string) error {
 	wg := new(sync.WaitGroup)
 	for _, h := range host_arr {
 		wg.Add(1)
-		go func(host string) {
+		taskF := func(host string) {
 			defer wg.Done()
 			cmdstr := fmt.Sprintf(`rsync -azh %s %s@%s:%s`, src, user, host, dest)
 			cmd := exec.Command("/bin/bash", "-c", cmdstr)
@@ -199,7 +200,12 @@ func ScpRun(config map[string]interface{}, host_arr []string) error {
 			} else {
 				fmt.Fprintf(os.Stderr, "Sync to %s:%s OK\n", host, dest)
 			}
-		}(h)
+		}
+		if ok && parallel {
+			go taskF(h)
+		} else {
+			taskF(h)
+		}
 	}
 
 	wg.Wait()
