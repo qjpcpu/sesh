@@ -2,11 +2,11 @@ package util
 
 import (
 	"fmt"
+	"github.com/qjpcpu/sesh/batch"
 	"github.com/qjpcpu/sesh/cowsay"
 	"github.com/qjpcpu/sesh/dircat"
 	cfg "github.com/qjpcpu/sesh/goconf.googlecode.com/hg"
 	"github.com/qjpcpu/sesh/golang.org/x/crypto/ssh/terminal"
-	"github.com/qjpcpu/sesh/sssh"
 	"io"
 	"os"
 	"os/exec"
@@ -16,7 +16,7 @@ import (
 	"time"
 )
 
-func Gets3hrc() (conf map[string]map[string]string, err error) {
+func Gettaskrc() (conf map[string]map[string]string, err error) {
 	conf = make(map[string]map[string]string)
 	fn := os.Getenv("HOME") + "/.seshrc"
 	if _, err = os.Stat(fn); os.IsNotExist(err) {
@@ -71,10 +71,10 @@ func SerialRun(config map[string]interface{}, raw_host_arr []string, start, end 
 	wg := new(sync.WaitGroup)
 
 	for index, h := range host_arr {
-		s3h := sssh.NewS3h(h, user, pwd, keyfile, cmd, printer, err_printer, wg)
-		s3h.Timeout = timeout
-		report(err_printer, fmt.Sprintf("%d/%d ", index+1+start, len(raw_host_arr)), s3h.Host, true)
-		s3h.Work()
+		task := batch.NewTask(h, user, pwd, keyfile, cmd, printer, err_printer, wg)
+		task.Timeout = timeout
+		report(err_printer, fmt.Sprintf("%d/%d ", index+1+start, len(raw_host_arr)), task.Host, true)
+		task.Work()
 	}
 	wg.Wait()
 	return nil
@@ -95,7 +95,7 @@ func ParallelRun(config map[string]interface{}, raw_host_arr []string, start, en
 	// Create master, the master is used to manage go routines
 	wg := new(sync.WaitGroup)
 	// Setup tmp directory for tmp files
-	dir := fmt.Sprintf("%s/.s3h.%d", tmpdir, time.Now().Nanosecond())
+	dir := fmt.Sprintf("%s/.task.%d", tmpdir, time.Now().Nanosecond())
 	if err := os.Mkdir(dir, os.ModeDir|os.ModePerm); err != nil {
 		return err
 	}
@@ -121,9 +121,9 @@ func ParallelRun(config map[string]interface{}, raw_host_arr []string, start, en
 		file, _ := os.Create(fmt.Sprintf("%s/%s", dir, h))
 		err_file, _ := os.Create(fmt.Sprintf("%s/%s.err", dir, h))
 		tmpfiles = append(tmpfiles, file, err_file)
-		s3h := sssh.NewS3h(h, user, pwd, keyfile, cmd, file, err_file, wg)
-		s3h.Timeout = timeout
-		go s3h.Work()
+		task := batch.NewTask(h, user, pwd, keyfile, cmd, file, err_file, wg)
+		task.Timeout = timeout
+		go task.Work()
 	}
 
 	// show realtime view for each host
@@ -174,8 +174,8 @@ func Interact(config map[string]interface{}, host string) {
 	err_printer, _ := config["Errout"].(io.Writer)
 
 	wg := new(sync.WaitGroup)
-	s3h := sssh.NewS3h(host, user, pwd, keyfile, cmd, printer, err_printer, wg)
-	s3h.SysLogin()
+	task := batch.NewTask(host, user, pwd, keyfile, cmd, printer, err_printer, wg)
+	task.SysLogin()
 }
 
 func ScpRun(config map[string]interface{}, host_arr []string) error {

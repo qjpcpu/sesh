@@ -71,7 +71,7 @@ func main() {
 	}
 
 	// get user
-	rc, err := util.Gets3hrc()
+	rc, err := util.Gettaskrc()
 	rc_sec := "default"
 	if options.User == "" {
 		if err == nil {

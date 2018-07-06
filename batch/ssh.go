@@ -1,4 +1,4 @@
-package sssh
+package batch
 
 import (
 	"bufio"
@@ -15,7 +15,7 @@ import (
 	"sync"
 )
 
-type Sssh struct {
+type Task struct {
 	User     string
 	Password string
 	Keyfile  string
@@ -27,9 +27,9 @@ type Sssh struct {
 	*sync.WaitGroup
 }
 
-func NewS3h(host, user, password, keyfile, cmd string, output, err_out io.Writer, wg *sync.WaitGroup) (s3h *Sssh) {
+func NewTask(host, user, password, keyfile, cmd string, output, err_out io.Writer, wg *sync.WaitGroup) (task *Task) {
 	wg.Add(1)
-	s3h = &Sssh{
+	task = &Task{
 		User:     user,
 		Password: password,
 		Keyfile:  keyfile,
@@ -39,7 +39,7 @@ func NewS3h(host, user, password, keyfile, cmd string, output, err_out io.Writer
 		Host:     host,
 		Timeout:  5,
 	}
-	s3h.WaitGroup = wg
+	task.WaitGroup = wg
 	return
 }
 
@@ -55,9 +55,9 @@ func getkey(file string) (key ssh.Signer, err error) {
 	return
 
 }
-func (s3h *Sssh) Work() {
-	if s3h.WaitGroup != nil {
-		defer s3h.Done()
+func (task *Task) Work() {
+	if task.WaitGroup != nil {
+		defer task.Done()
 	}
 	ssh_agent := func() ssh.AuthMethod {
 		if sshAgent, err := net.Dial("unix", os.Getenv("SSH_AUTH_SOCK")); err == nil {
@@ -66,51 +66,51 @@ func (s3h *Sssh) Work() {
 		return nil
 	}
 	auths := []ssh.AuthMethod{
-		ssh.Password(s3h.Password),
+		ssh.Password(task.Password),
 	}
 	if os.Getenv("SSH_AUTH_SOCK") != "" {
 		auths = append(auths, ssh_agent())
 	}
-	if s3h.Keyfile != "" {
-		if key, err := getkey(s3h.Keyfile); err == nil {
+	if task.Keyfile != "" {
+		if key, err := getkey(task.Keyfile); err == nil {
 			auths = append(auths, ssh.PublicKeys(key))
 		}
 	}
 	config := &ssh.ClientConfig{
-		User: s3h.User,
+		User: task.User,
 		Auth: auths,
 	}
-	conn, err := ssh.Dial("tcp", s3h.Host+":22", config)
+	conn, err := ssh.Dial("tcp", task.Host+":22", config)
 	if err != nil {
-		if s3h.Password != "" && strings.Contains(err.Error(), "unable to authenticate, attempted methods [none publickey]") {
+		if task.Password != "" && strings.Contains(err.Error(), "unable to authenticate, attempted methods [none publickey]") {
 			config = &ssh.ClientConfig{
-				User: s3h.User,
-				Auth: []ssh.AuthMethod{ssh.Password(s3h.Password)},
+				User: task.User,
+				Auth: []ssh.AuthMethod{ssh.Password(task.Password)},
 			}
-			conn, err = ssh.Dial("tcp", s3h.Host+":22", config)
+			conn, err = ssh.Dial("tcp", task.Host+":22", config)
 			if err != nil {
-				fmt.Fprintln(s3h.Errout, "unable to connect: ", err.Error())
+				fmt.Fprintln(task.Errout, "unable to connect: ", err.Error())
 				return
 			}
 		} else {
-			fmt.Fprintln(s3h.Errout, "unable to connect: ", err.Error())
+			fmt.Fprintln(task.Errout, "unable to connect: ", err.Error())
 			return
 		}
 	}
 	defer conn.Close()
 	session, err := conn.NewSession()
 	if err != nil {
-		fmt.Fprintln(s3h.Errout, "Failed to create session: "+err.Error())
+		fmt.Fprintln(task.Errout, "Failed to create session: "+err.Error())
 		return
 	}
 	defer session.Close()
 
-	session.Stdout = s3h.Output
-	session.Stderr = s3h.Output
-	session.Run(s3h.Cmd)
+	session.Stdout = task.Output
+	session.Stderr = task.Output
+	session.Run(task.Cmd)
 }
 
-func (s3h *Sssh) Login() {
+func (task *Task) Login() {
 	ssh_agent := func() ssh.AuthMethod {
 		if sshAgent, err := net.Dial("unix", os.Getenv("SSH_AUTH_SOCK")); err == nil {
 			return ssh.PublicKeysCallback(agent.NewClient(sshAgent).Signers)
@@ -118,29 +118,29 @@ func (s3h *Sssh) Login() {
 		return nil
 	}
 	auths := []ssh.AuthMethod{
-		ssh.Password(s3h.Password),
+		ssh.Password(task.Password),
 	}
 	if os.Getenv("SSH_AUTH_SOCK") != "" {
 		auths = append(auths, ssh_agent())
 	}
-	if s3h.Keyfile != "" {
-		if key, err := getkey(s3h.Keyfile); err == nil {
+	if task.Keyfile != "" {
+		if key, err := getkey(task.Keyfile); err == nil {
 			auths = append(auths, ssh.PublicKeys(key))
 		}
 	}
 	config := &ssh.ClientConfig{
-		User: s3h.User,
+		User: task.User,
 		Auth: auths,
 	}
-	conn, err := ssh.Dial("tcp", s3h.Host+":22", config)
+	conn, err := ssh.Dial("tcp", task.Host+":22", config)
 	if err != nil {
-		fmt.Fprintln(s3h.Errout, "unable to connect: ", err.Error())
+		fmt.Fprintln(task.Errout, "unable to connect: ", err.Error())
 		return
 	}
 	defer conn.Close()
 	session, err := conn.NewSession()
 	if err != nil {
-		fmt.Fprintln(s3h.Errout, "Failed to create session: "+err.Error())
+		fmt.Fprintln(task.Errout, "Failed to create session: "+err.Error())
 		return
 	}
 	defer session.Close()
@@ -158,13 +158,13 @@ func (s3h *Sssh) Login() {
 
 	// Request pseudo terminal
 	if err := session.RequestPty("xterm", 80, 200, modes); err != nil {
-		fmt.Fprintln(s3h.Errout, "request for pseudo terminal failed: %s", err)
+		fmt.Fprintln(task.Errout, "request for pseudo terminal failed: %s", err)
 		return
 	}
 
 	// Start remote shell
 	if err := session.Shell(); err != nil {
-		fmt.Fprintln(s3h.Errout, "failed to start shell: %s", err)
+		fmt.Fprintln(task.Errout, "failed to start shell: %s", err)
 		return
 	}
 
@@ -191,13 +191,13 @@ func (s3h *Sssh) Login() {
 	}
 	qc <- "Quit signal monitor"
 }
-func (s3h *Sssh) SysLogin() {
-	if s3h.WaitGroup != nil {
-		defer s3h.Done()
+func (task *Task) SysLogin() {
+	if task.WaitGroup != nil {
+		defer task.Done()
 	}
-	str := "ssh " + s3h.User + "@" + s3h.Host
-	if s3h.Keyfile != "" {
-		str = str + " -i " + s3h.Keyfile
+	str := "ssh " + task.User + "@" + task.Host
+	if task.Keyfile != "" {
+		str = str + " -i " + task.Keyfile
 	}
 	parts := strings.Fields(str)
 	head := parts[0]
@@ -208,7 +208,7 @@ func (s3h *Sssh) SysLogin() {
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()
 	if err != nil {
-		fmt.Fprintln(s3h.Errout, err.Error())
+		fmt.Fprintln(task.Errout, err.Error())
 		return
 	}
 }
