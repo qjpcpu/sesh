@@ -69,7 +69,9 @@ func (task *Task) Work() {
 		ssh.Password(task.Password),
 	}
 	if os.Getenv("SSH_AUTH_SOCK") != "" {
-		auths = append(auths, ssh_agent())
+		if sagt := ssh_agent(); sagt != nil {
+			auths = append(auths, ssh_agent())
+		}
 	}
 	if task.Keyfile != "" {
 		if key, err := getkey(task.Keyfile); err == nil {
@@ -121,7 +123,9 @@ func (task *Task) Login() {
 		ssh.Password(task.Password),
 	}
 	if os.Getenv("SSH_AUTH_SOCK") != "" {
-		auths = append(auths, ssh_agent())
+		if sagt := ssh_agent(); sagt != nil {
+			auths = append(auths, ssh_agent())
+		}
 	}
 	if task.Keyfile != "" {
 		if key, err := getkey(task.Keyfile); err == nil {
