@@ -225,7 +225,7 @@ func BuildKnownHosts(host_arr []string) {
 	cmdstr := fmt.Sprintf(`
 [ ! -e %s ] && mkdir -p %s && chmod 700 %s
 [ ! -e %s ] && touch %s && chmod 644 %s
-ssh-keyscan "%s" >> %s
+ssh-keyscan %s >> %s
 `, dirname, dirname, dirname,
 		filename, filename, filename,
 		strings.Join(not_exists, " "), filename)
