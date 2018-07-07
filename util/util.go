@@ -5,7 +5,6 @@ import (
 	"github.com/qjpcpu/sesh/batch"
 	"github.com/qjpcpu/sesh/cowsay"
 	"github.com/qjpcpu/sesh/dircat"
-	cfg "github.com/qjpcpu/sesh/goconf.googlecode.com/hg"
 	"github.com/qjpcpu/sesh/golang.org/x/crypto/ssh/terminal"
 	"io"
 	"os"
@@ -30,32 +29,6 @@ type TaskArgs struct {
 	Parallel bool
 	Source   string
 	Destdir  string
-}
-
-func Gettaskrc() (conf map[string]map[string]string, err error) {
-	conf = make(map[string]map[string]string)
-	fn := os.Getenv("HOME") + "/.seshrc"
-	if _, err = os.Stat(fn); os.IsNotExist(err) {
-		return conf, err
-	}
-	if c, err := cfg.ReadConfigFile(fn); err != nil {
-		return conf, err
-	} else {
-		sections := c.GetSections()
-		for _, sec := range sections {
-			conf[sec] = make(map[string]string)
-			if user, err := c.GetString(sec, "user"); err == nil {
-				conf[sec]["user"] = user
-			}
-			if keyfile, err := c.GetString(sec, "keyfile"); err == nil {
-				conf[sec]["keyfile"] = keyfile
-			}
-			if password, err := c.GetString(sec, "password"); err == nil {
-				conf[sec]["password"] = password
-			}
-		}
-		return conf, err
-	}
 }
 
 func GirlSay(content ...interface{}) string {

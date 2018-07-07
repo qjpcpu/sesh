@@ -17,7 +17,7 @@ type SeshFlags struct {
 	Hostlist       string             `goptions:"-h, --host-list, description='HOSTS, hosts seperated by comma'"`
 	User           string             `goptions:"-u, --user, description='USER, user name'"`
 	Password       string             `goptions:"-p, --password, description='PASSWORD'"`
-	Keyfile        string             `goptions:"-k, --key, description='ssh auth file'"`
+	Keyfile        string             `goptions:"-i, --identity-file, description='ssh auth file'"`
 	Cmdfile        []string           `goptions:"-c, --command-file, description='CMD_FILE, Command file'"`
 	Tmpdir         string             `goptions:"-t, --tmp-directory, description='TMP_DIRECTORY, Specify tmp directory'"`
 	Data           string             `goptions:"-d, --data, description='the name would be replace according name=value pair in command or command file. The name format in command should be {{ .name }}'"`
@@ -71,30 +71,11 @@ func main() {
 	}
 
 	// get user
-	rc, err := util.Gettaskrc()
-	rc_sec := "default"
 	if options.User == "" {
-		if err == nil {
-			options.User = rc[rc_sec]["user"]
-		}
-		if options.User == "" {
-			options.User = os.Getenv("USER")
-		}
-	} else {
-		_, ok := rc[options.User]
-		if ok && rc[options.User]["user"] == options.User {
-			rc_sec = options.User
-		}
-	}
-	// get password
-	if options.Password == "" && err == nil && options.User == rc[rc_sec]["user"] && rc[rc_sec]["password"] != "" {
-		options.Password = rc[rc_sec]["password"]
+		options.User = os.Getenv("USER")
 	}
 	// get  key file
 	if options.Keyfile == "" {
-		if err == nil {
-			options.Keyfile = rc[rc_sec]["keyfile"]
-		}
 		if options.Keyfile == "" {
 			options.Keyfile = os.Getenv("HOME") + "/.ssh/id_rsa"
 		}
