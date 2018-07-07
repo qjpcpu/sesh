@@ -158,13 +158,13 @@ func (task *Task) Login() {
 
 	// Request pseudo terminal
 	if err := session.RequestPty("xterm", 80, 200, modes); err != nil {
-		fmt.Fprintln(task.Errout, "request for pseudo terminal failed: %s", err)
+		fmt.Fprintln(task.Errout, "request for pseudo terminal failed: ", err)
 		return
 	}
 
 	// Start remote shell
 	if err := session.Shell(); err != nil {
-		fmt.Fprintln(task.Errout, "failed to start shell: %s", err)
+		fmt.Fprintln(task.Errout, "failed to start shell: ", err)
 		return
 	}
 

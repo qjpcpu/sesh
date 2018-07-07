@@ -16,6 +16,22 @@ import (
 	"time"
 )
 
+type TaskArgs struct {
+	User     string
+	Password string
+	Keyfile  string
+	Cmd      string
+	CmdArgs  string
+	Timeout  int
+	// parallel run
+	Output    io.Writer
+	ErrOutput io.Writer
+	// scp
+	Parallel bool
+	Source   string
+	Destdir  string
+}
+
 func Gettaskrc() (conf map[string]map[string]string, err error) {
 	conf = make(map[string]map[string]string)
 	fn := os.Getenv("HOME") + "/.seshrc"
@@ -55,18 +71,18 @@ func report(output io.Writer, prefix, host string, color bool) {
 	}
 }
 
-func SerialRun(config map[string]interface{}, raw_host_arr []string, start, end int) error {
+func SerialRun(config TaskArgs, raw_host_arr []string, start, end int) error {
 	host_arr := raw_host_arr[start:end]
-	user, _ := config["User"].(string)
-	pwd, _ := config["Password"].(string)
-	keyfile, _ := config["Keyfile"].(string)
-	cmd, _ := config["Cmd"].(string)
-	args, _ := config["Args"].(string)
-	timeout, _ := config["Timeout"].(int)
+	user := config.User
+	pwd := config.Password
+	keyfile := config.Keyfile
+	cmd := config.Cmd
+	args := config.CmdArgs
+	timeout := config.Timeout
 	// Format command
 	cmd = format_cmd(cmd, args)
-	printer, _ := config["Output"].(io.Writer)
-	err_printer, _ := config["Errout"].(io.Writer)
+	printer := config.Output
+	err_printer := config.ErrOutput
 
 	wg := new(sync.WaitGroup)
 
@@ -80,17 +96,17 @@ func SerialRun(config map[string]interface{}, raw_host_arr []string, start, end 
 	return nil
 }
 
-func ParallelRun(config map[string]interface{}, raw_host_arr []string, start, end int, tmpdir string) error {
+func ParallelRun(config TaskArgs, raw_host_arr []string, start, end int, tmpdir string) error {
 	host_arr := raw_host_arr[start:end]
-	user, _ := config["User"].(string)
-	pwd, _ := config["Password"].(string)
-	keyfile, _ := config["Keyfile"].(string)
-	cmd, _ := config["Cmd"].(string)
-	args, _ := config["Args"].(string)
-	timeout, _ := config["Timeout"].(int)
+	user := config.User
+	pwd := config.Password
+	keyfile := config.Keyfile
+	cmd := config.Cmd
+	args := config.CmdArgs
+	timeout := config.Timeout
 	cmd = format_cmd(cmd, args)
-	printer, _ := config["Output"].(io.Writer)
-	err_printer, _ := config["Errout"].(io.Writer)
+	printer := config.Output
+	err_printer := config.ErrOutput
 
 	// Create master, the master is used to manage go routines
 	wg := new(sync.WaitGroup)
@@ -165,25 +181,26 @@ func ParallelRun(config map[string]interface{}, raw_host_arr []string, start, en
 	}
 	return nil
 }
-func Interact(config map[string]interface{}, host string) {
-	user, _ := config["User"].(string)
-	pwd, _ := config["Password"].(string)
-	keyfile, _ := config["Keyfile"].(string)
-	cmd, _ := config["Cmd"].(string)
-	printer, _ := config["Output"].(io.Writer)
-	err_printer, _ := config["Errout"].(io.Writer)
-
+func Interact(config TaskArgs, host string) {
 	wg := new(sync.WaitGroup)
-	task := batch.NewTask(host, user, pwd, keyfile, cmd, printer, err_printer, wg)
+	task := batch.NewTask(
+		host,
+		config.User,
+		config.Password,
+		config.Keyfile,
+		config.Cmd,
+		config.Output,
+		config.ErrOutput,
+		wg,
+	)
 	task.SysLogin()
 }
 
-func ScpRun(config map[string]interface{}, host_arr []string) error {
-	user, _ := config["User"].(string)
-	//keyfile, _ := config["Keyfile"].(string)
-	parallel, ok := config["Parallel"].(bool)
-	src, _ := config["Source"].(string)
-	dest, _ := config["Destdir"].(string)
+func ScpRun(config TaskArgs, host_arr []string) error {
+	user := config.User
+	parallel := config.Parallel
+	src := config.Source
+	dest := config.Destdir
 	if !strings.HasSuffix(dest, "/") {
 		dest += "/"
 	}
@@ -201,7 +218,7 @@ func ScpRun(config map[string]interface{}, host_arr []string) error {
 				fmt.Fprintf(os.Stderr, "Sync to %s:%s OK\n", host, dest)
 			}
 		}
-		if ok && parallel {
+		if parallel {
 			go taskF(h)
 		} else {
 			taskF(h)

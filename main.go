@@ -116,16 +116,16 @@ func main() {
 
 	// Scp file
 	if options.Sscp.Src != "" && options.Sscp.Destdir != "" {
-		config := map[string]interface{}{
-			"User":     options.User,
-			"Password": options.Password,
-			"Keyfile":  options.Keyfile,
-			"Source":   options.Sscp.Src,
-			"Destdir":  options.Sscp.Destdir,
-			"Timeout":  options.Timeout,
-			"Parallel": options.Parallel,
+		taskArgs := util.TaskArgs{
+			User:     options.User,
+			Password: options.Password,
+			Keyfile:  options.Keyfile,
+			Source:   options.Sscp.Src,
+			Destdir:  options.Sscp.Destdir,
+			Timeout:  options.Timeout,
+			Parallel: options.Parallel,
 		}
-		if err := util.ScpRun(config, host_arr); err != nil {
+		if err := util.ScpRun(taskArgs, host_arr); err != nil {
 			fmt.Fprintf(os.Stderr, "\033[31mCopy faild! %v\033[0m\n", err)
 		} else {
 			fmt.Fprintln(os.Stderr, "\033[32mFinished!\033[0m")
@@ -171,15 +171,15 @@ func main() {
 	}
 
 	// Begin to run
-	config := map[string]interface{}{
-		"User":     options.User,
-		"Password": options.Password,
-		"Keyfile":  options.Keyfile,
-		"Cmd":      cmd,
-		"Args":     options.Arguments,
-		"Output":   os.Stdout,
-		"Errout":   os.Stderr,
-		"Timeout":  options.Timeout,
+	config := util.TaskArgs{
+		User:      options.User,
+		Password:  options.Password,
+		Keyfile:   options.Keyfile,
+		Cmd:       cmd,
+		CmdArgs:   options.Arguments,
+		Output:    os.Stdout,
+		ErrOutput: os.Stderr,
+		Timeout:   options.Timeout,
 	}
 	if options.Debug {
 		printDebugInfo(options, host_arr, cmd)
