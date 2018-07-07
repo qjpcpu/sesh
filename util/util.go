@@ -7,6 +7,7 @@ import (
 	"github.com/qjpcpu/sesh/dircat"
 	"github.com/qjpcpu/sesh/golang.org/x/crypto/ssh/terminal"
 	"io"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -57,6 +58,8 @@ func SerialRun(config TaskArgs, raw_host_arr []string, start, end int) error {
 	printer := config.Output
 	err_printer := config.ErrOutput
 
+	BuildKnownHosts(host_arr)
+
 	wg := new(sync.WaitGroup)
 
 	for index, h := range host_arr {
@@ -103,6 +106,8 @@ func ParallelRun(config TaskArgs, raw_host_arr []string, start, end int, tmpdir 
 		signal.Stop(intqueue)
 		os.RemoveAll(dir)
 	}()
+
+	BuildKnownHosts(host_arr)
 
 	// Create tmp file for every host, then executes.
 	var tmpfiles []*os.File
@@ -178,17 +183,12 @@ func ScpRun(config TaskArgs, host_arr []string) error {
 		dest += "/"
 	}
 	wg := new(sync.WaitGroup)
+	BuildKnownHosts(host_arr)
 	for _, h := range host_arr {
 		wg.Add(1)
 		taskF := func(host string) {
 			defer wg.Done()
-			cmdstr := fmt.Sprintf(`FILE=%s
-[ ! -e $FILE ] && touch $FILE && chmod 644 $FILE
-res=$(grep %s $FILE)
-if [ -z "$res" ];then
-  ssh-keyscan %s >> $FILE
-fi
-rsync -azh %s %s@%s:%s`, os.Getenv("HOME")+"/.ssh/known_hosts", host, host, src, user, host, dest)
+			cmdstr := fmt.Sprintf(`rsync -azh %s %s@%s:%s`, src, user, host, dest)
 			cmd := exec.Command("/bin/bash", "-c", cmdstr)
 			fmt.Fprintf(os.Stderr, "Start sync to  %s......\n", host)
 			if err := cmd.Run(); err != nil {
@@ -206,4 +206,28 @@ rsync -azh %s %s@%s:%s`, os.Getenv("HOME")+"/.ssh/known_hosts", host, host, src,
 
 	wg.Wait()
 	return nil
+}
+
+func BuildKnownHosts(host_arr []string) {
+	filename := os.Getenv("HOME") + "/.ssh/known_hosts"
+	dirname := os.Getenv("HOME") + "/.ssh"
+	content_bytes, _ := ioutil.ReadFile(filename)
+	content := string(content_bytes)
+	var not_exists []string
+	for _, host := range host_arr {
+		if !strings.Contains(content, host) {
+			not_exists = append(not_exists, host)
+		}
+	}
+	if len(not_exists) == 0 {
+		return
+	}
+	cmdstr := fmt.Sprintf(`
+[ ! -e %s ] && mkdir -p %s && chmod 700 %s
+[ ! -e %s ] && touch %s && chmod 644 %s
+ssh-keyscan "%s" >> %s
+`, dirname, dirname, dirname,
+		filename, filename, filename,
+		strings.Join(not_exists, " "), filename)
+	exec.Command("/bin/sh", "-c", cmdstr)
 }
