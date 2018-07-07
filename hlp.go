@@ -32,6 +32,7 @@ func printDebugInfo(options SeshFlags, hosts []string, cmd string) {
 	}
 	fmt.Printf("\033[32mPause for check:\033[0m %v\n", options.Pause)
 }
+
 func parseData(data string) map[string]interface{} {
 	kv := make(map[string]interface{})
 	data = strings.Replace(data, " ", "", -1)
