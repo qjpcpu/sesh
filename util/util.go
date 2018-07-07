@@ -182,7 +182,13 @@ func ScpRun(config TaskArgs, host_arr []string) error {
 		wg.Add(1)
 		taskF := func(host string) {
 			defer wg.Done()
-			cmdstr := fmt.Sprintf(`rsync -azh %s %s@%s:%s`, src, user, host, dest)
+			cmdstr := fmt.Sprintf(`
+[ ! -e ~/.ssh/known_hosts ] && touch ~/.ssh/known_hosts && chmod 644 ~/.ssh/known_hosts
+res=$(grep %s ~/.ssh/known_hosts)
+if [ -z "$res" ];then
+  ssh-keyscan $host >> ~/.ssh/known_hosts
+fi
+rsync -azh %s %s@%s:%s`, host, src, user, host, dest)
 			cmd := exec.Command("/bin/bash", "-c", cmdstr)
 			fmt.Fprintf(os.Stderr, "Start sync to  %s......\n", host)
 			if err := cmd.Run(); err != nil {
