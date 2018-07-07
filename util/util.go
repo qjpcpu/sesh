@@ -229,5 +229,6 @@ ssh-keyscan "%s" >> %s
 `, dirname, dirname, dirname,
 		filename, filename, filename,
 		strings.Join(not_exists, " "), filename)
-	exec.Command("/bin/sh", "-c", cmdstr)
+	cmd := exec.Command("/bin/sh", "-c", cmdstr)
+	cmd.Run()
 }
