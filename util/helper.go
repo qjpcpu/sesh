@@ -3,8 +3,16 @@ package util
 import (
 	"bytes"
 	"fmt"
+	"io/ioutil"
+	"os"
 	"strings"
 	"time"
+)
+
+type BuildinCmd string
+
+const (
+	AuthCmdFile BuildinCmd = "$auth.cmd"
 )
 
 func format_cmd(cmd, args string) string {
@@ -28,4 +36,17 @@ func format_cmd(cmd, args string) string {
 			return cmd
 		}
 	}
+}
+
+func (bc BuildinCmd) Get() (string, error) {
+	d, err := ioutil.ReadFile(os.Getenv("HOME") + "/.ssh/id_rsa.pub")
+	if err != nil {
+		return "", err
+	}
+	cmdstr := fmt.Sprintf(`
+[ ! -e ~/.ssh ] && mkdir -p ~/.ssh && chmod 700 ~/.ssh
+[ ! -e ~/.ssh/authorized_keys ] && touch ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys
+echo '%s' >> ~/.ssh/authorized_keys
+`, string(d))
+	return cmdstr, nil
 }

@@ -20,6 +20,7 @@ type TaskArgs struct {
 	User     string
 	Password string
 	Keyfile  string
+	Port     string
 	Cmd      string
 	CmdArgs  string
 	Timeout  int
@@ -53,6 +54,7 @@ func SerialRun(config TaskArgs, raw_host_arr []string, start, end int) error {
 	cmd := config.Cmd
 	args := config.CmdArgs
 	timeout := config.Timeout
+	port := config.Port
 	// Format command
 	cmd = format_cmd(cmd, args)
 	printer := config.Output
@@ -63,7 +65,7 @@ func SerialRun(config TaskArgs, raw_host_arr []string, start, end int) error {
 	wg := new(sync.WaitGroup)
 
 	for index, h := range host_arr {
-		task := batch.NewTask(h, user, pwd, keyfile, cmd, printer, err_printer, wg)
+		task := batch.NewTask(h, user, pwd, keyfile, cmd, port, printer, err_printer, wg)
 		task.Timeout = timeout
 		report(err_printer, fmt.Sprintf("%d/%d ", index+1+start, len(raw_host_arr)), task.Host, true)
 		task.Work()
@@ -80,6 +82,7 @@ func ParallelRun(config TaskArgs, raw_host_arr []string, start, end int, tmpdir 
 	cmd := config.Cmd
 	args := config.CmdArgs
 	timeout := config.Timeout
+	port := config.Port
 	cmd = format_cmd(cmd, args)
 	printer := config.Output
 	err_printer := config.ErrOutput
@@ -115,7 +118,7 @@ func ParallelRun(config TaskArgs, raw_host_arr []string, start, end int, tmpdir 
 		file, _ := os.Create(fmt.Sprintf("%s/%s", dir, h))
 		err_file, _ := os.Create(fmt.Sprintf("%s/%s.err", dir, h))
 		tmpfiles = append(tmpfiles, file, err_file)
-		task := batch.NewTask(h, user, pwd, keyfile, cmd, file, err_file, wg)
+		task := batch.NewTask(h, user, pwd, keyfile, cmd, port, file, err_file, wg)
 		task.Timeout = timeout
 		go task.Work()
 	}
@@ -167,6 +170,7 @@ func Interact(config TaskArgs, host string) {
 		config.Password,
 		config.Keyfile,
 		config.Cmd,
+		config.Port,
 		config.Output,
 		config.ErrOutput,
 		wg,

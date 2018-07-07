@@ -17,6 +17,7 @@ type SeshFlags struct {
 	Hostlist       string             `goptions:"-h, --host-list, description='HOSTS, hosts seperated by comma'"`
 	User           string             `goptions:"-u, --user, description='USER, user name'"`
 	Password       string             `goptions:"-p, --password, description='PASSWORD'"`
+	Port           string             `goptions:"--port, description='PORT'"`
 	Keyfile        string             `goptions:"-i, --identity-file, description='ssh auth file'"`
 	Cmdfile        []string           `goptions:"-c, --command-file, description='CMD_FILE, Command file'"`
 	Tmpdir         string             `goptions:"-t, --tmp-directory, description='TMP_DIRECTORY, Specify tmp directory'"`
@@ -100,6 +101,7 @@ func main() {
 		taskArgs := util.TaskArgs{
 			User:     options.User,
 			Password: options.Password,
+			Port:     options.Port,
 			Keyfile:  options.Keyfile,
 			Source:   options.Sscp.Src,
 			Destdir:  options.Sscp.Destdir,
@@ -118,6 +120,12 @@ func main() {
 	if len(options.Cmd) == 0 && len(options.Cmdfile) == 0 {
 		fmt.Fprintln(os.Stderr, "\033[31mPlese specify command you want execute.\033[0m")
 		return
+	}
+	if len(options.Cmdfile) == 1 && options.Cmdfile[0] == string(util.AuthCmdFile) {
+		if c, err := util.AuthCmdFile.Get(); err == nil {
+			options.Cmd = []string{c}
+			options.Cmdfile = []string{}
+		}
 	}
 	// parse command template
 	cmd := ""
@@ -156,6 +164,7 @@ func main() {
 		User:      options.User,
 		Password:  options.Password,
 		Keyfile:   options.Keyfile,
+		Port:      options.Port,
 		Cmd:       cmd,
 		CmdArgs:   options.Arguments,
 		Output:    os.Stdout,

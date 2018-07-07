@@ -18,6 +18,7 @@ import (
 type Task struct {
 	User     string
 	Password string
+	Port     string
 	Keyfile  string
 	Output   io.Writer
 	Errout   io.Writer
@@ -27,12 +28,16 @@ type Task struct {
 	*sync.WaitGroup
 }
 
-func NewTask(host, user, password, keyfile, cmd string, output, err_out io.Writer, wg *sync.WaitGroup) (task *Task) {
+func NewTask(host, user, password, keyfile, cmd, port string, output, err_out io.Writer, wg *sync.WaitGroup) (task *Task) {
 	wg.Add(1)
+	if port == "" {
+		port = "22"
+	}
 	task = &Task{
 		User:     user,
 		Password: password,
 		Keyfile:  keyfile,
+		Port:     port,
 		Output:   output,
 		Errout:   err_out,
 		Cmd:      cmd,
@@ -82,14 +87,14 @@ func (task *Task) Work() {
 		User: task.User,
 		Auth: auths,
 	}
-	conn, err := ssh.Dial("tcp", task.Host+":22", config)
+	conn, err := ssh.Dial("tcp", task.Host+":"+task.Port, config)
 	if err != nil {
 		if task.Password != "" && strings.Contains(err.Error(), "unable to authenticate, attempted methods [none publickey]") {
 			config = &ssh.ClientConfig{
 				User: task.User,
 				Auth: []ssh.AuthMethod{ssh.Password(task.Password)},
 			}
-			conn, err = ssh.Dial("tcp", task.Host+":22", config)
+			conn, err = ssh.Dial("tcp", task.Host+":"+task.Port, config)
 			if err != nil {
 				fmt.Fprintln(task.Errout, "unable to connect: ", err.Error())
 				return
@@ -136,7 +141,7 @@ func (task *Task) Login() {
 		User: task.User,
 		Auth: auths,
 	}
-	conn, err := ssh.Dial("tcp", task.Host+":22", config)
+	conn, err := ssh.Dial("tcp", task.Host+":"+task.Port, config)
 	if err != nil {
 		fmt.Fprintln(task.Errout, "unable to connect: ", err.Error())
 		return
