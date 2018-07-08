@@ -34,7 +34,7 @@ type SeshFlags struct {
 	Sscp struct {
 		Src     string `goptions:"-s,--source,obligatory,description='source file'"`
 		Destdir string `goptions:"-d, --dest, obligatory,description='destination directory'"`
-	} `goptions:"rsync"`
+	} `goptions:"send"`
 }
 
 func main() {
