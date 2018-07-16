@@ -45,9 +45,9 @@ Sesh also can get hosts from Stdin:
     cat host-file | sesh -u user -p password 'echo hello'
 
 #### Authorization
-Use `-p` to specify password, but it's better to use rsa authorization with `-k`:
+Use `-p` to specify password, but it's better to use rsa authorization with `-i`:
 
-	sesh -f host-file -u user -k ~/.ssh/id_rsa 'echo hello'
+	sesh -f host-file -u user -i ~/.ssh/id_rsa 'echo hello'
 	# Or, just use nothing for authorization, sesh use ~/.ssh/id_rsa as default
 	sesh -f host-file -u user 'echo hello'
 
@@ -61,17 +61,6 @@ The default connection timeout is 5 seconds, it can be changed by `--timeout`:
 
     sesh -f host-file  --timeout 1 'echo hello'
 
-#### Configuration file
-
-You can put commonly used user and rsa file in `~/.seshrc`, which is a `ini` file:
-
-    user = jason
-    keyfile = /path/to/rsa
-	
-Sesh would use this file as preference, so you can input less:
-
-	sesh -f host-file 'echo hello'
-	
 #### Parallel
 
 Sesh would execute job for each host serially by default, swith `-r` on for parallel execution:
