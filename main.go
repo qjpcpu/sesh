@@ -19,9 +19,9 @@ type SeshFlags struct {
 	Password       string             `goptions:"-p, --password, description='PASSWORD'"`
 	Port           string             `goptions:"--port, description='PORT'"`
 	Keyfile        string             `goptions:"-i, --identity-file, description='ssh auth file'"`
-	Cmdfile        []string           `goptions:"-c, --command-file, description='CMD_FILE, Command file'"`
+	Cmdfile        string             `goptions:"-c, --command-file, description='CMD_FILE, Command file'"`
 	Tmpdir         string             `goptions:"-t, --tmp-directory, description='TMP_DIRECTORY, Specify tmp directory'"`
-	Data           []string           `goptions:"-d, --data, description='the name would be replace according name=value pair in command or command file. The name format in command should be {{ .name }}'"`
+	Data           []string           `goptions:"-d, --data, description='the name would be replace according -d name=value pair in command or command file. The name format in command should be {{ name }}'"`
 	Arguments      string             `goptions:"--exec, description='how to exec script in remote, use {} stands for scriptname'"`
 	Parallel       bool               `goptions:"-r, --rapid, description='Parallel execution'"`
 	ParallelDegree int                `goptions:"--parallel-degree, description='Parallel degree, default is the size of hosts'"`
@@ -121,20 +121,18 @@ func main() {
 		fmt.Fprintln(os.Stderr, "\033[31mPlese specify command you want execute.\033[0m")
 		return
 	}
-	if len(options.Cmdfile) == 1 && options.Cmdfile[0] == string(util.AuthCmdFile) {
+	if options.Cmdfile == string(util.AuthCmdFile) {
 		if c, err := util.AuthCmdFile.Get(); err == nil {
 			options.Cmd = []string{c}
-			options.Cmdfile = []string{}
+			options.Cmdfile = ""
 		}
 	}
 	// parse command template
 	cmd := ""
-	if len(options.Cmdfile) > 0 {
-		for _, cf := range options.Cmdfile {
-			if _, err := os.Stat(cf); os.IsNotExist(err) {
-				fmt.Fprintln(os.Stderr, "\033[31mCommand file "+cf+" not found!\033[0m")
-				return
-			}
+	if options.Cmdfile != "" {
+		if _, err := os.Stat(options.Cmdfile); os.IsNotExist(err) {
+			fmt.Fprintln(os.Stderr, "\033[31mCommand file "+options.Cmdfile+" not found!\033[0m")
+			return
 		}
 		if o, err := templ.ParseFromFiles(options.Cmdfile, parseData(options.Data)); err != nil {
 			fmt.Fprintf(os.Stderr, "\033[31mParse command file failed!\033[0m\n%v\n", err)

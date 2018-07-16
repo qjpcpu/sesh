@@ -125,9 +125,9 @@ You can run sesh like this:
 
 #### Command template
 
-You can embedded parameter in command or command file with `{{ .name }}`, then invoke sesh with `-d`, for example, there is a command file `enter-today-dir.cmd`:
+You can embedded parameter in command or command file with `{{ name }}`, then invoke sesh with `-d`, for example, there is a command file `enter-today-dir.cmd`:
 
-	cd ~/{{ .date }}/logs && pwd
+	cd ~/{{ date }}/logs && pwd
 
 then, we can use sesh like this:
 
@@ -135,7 +135,7 @@ then, we can use sesh like this:
 	
 You can also use argument parse for inline commands:
 
-	sesh -f hosts -d who=jason 'echo {{ .who }} is sexy'
+	sesh -f hosts -d who=jason 'echo {{ who }} is sexy'
 	
 Or you can invoke script(the first line must start with `#!`) with arguments in normal way:
 
@@ -148,37 +148,12 @@ Now the sesh would be:
 
 	sesh -f hosts -c x.rb --exec "{} hello"
 
-#### Embedded command template
-
-And sesh also support embedded template, for example, there is two command template files:
-
-File who.cmd
-
-	{{define "who"}}
-	whoami
-	{{end}}
-	
-File main.cmd
-
-	name=$({{ template "who" }})
-	echo "Now ${name} is in $(pwd)"
-
-Then we can use sesh like this:
-
-	sesh -f hosts -c main.cmd -c who.cmd
-	# The output is:
-	# Now jason is in /home/jason
-	
-The main template `main.cmd` invoke the embedded template `who.cmd`. Use `{{define "XXX"}} ....{{end}}` to define template `XXX`, and then use `{{template "XXX"}}` to invoke template. By default, the `-d` parameters can't be seen in subtemplate, if you want deliver parameters into subtemplate, you should use:
-
-	{{ template "XXX" . }}
-	
 
 #### Remote cp(scp)
 
 Sesh also support scp
 
-    sesh -f hosts scp -s srcfile -d /remote/directory
+    sesh -f hosts send -s srcfile -d /remote/directory
 
 
 #### Help
