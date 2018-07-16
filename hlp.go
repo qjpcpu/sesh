@@ -33,17 +33,15 @@ func printDebugInfo(options SeshFlags, hosts []string, cmd string) {
 	fmt.Printf("\033[32mPause for check:\033[0m %v\n", options.Pause)
 }
 
-func parseData(data string) map[string]interface{} {
+func parseData(datas []string) map[string]interface{} {
 	kv := make(map[string]interface{})
-	data = strings.Replace(data, " ", "", -1)
-	data = strings.TrimSuffix(data, ",")
-	if data == "" {
-		return kv
-	}
-	arr := strings.Split(data, ",")
-	for _, b := range arr {
-		tmp := strings.Split(b, "=")
-		kv[tmp[0]] = tmp[1]
+	for _, data := range datas {
+		data = strings.TrimSpace(data)
+		if data == "" || !strings.Contains(data, "=") {
+			continue
+		}
+		arr := strings.SplitN(data, "=", 2)
+		kv[arr[0]] = arr[1]
 	}
 	return kv
 }

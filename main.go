@@ -21,7 +21,7 @@ type SeshFlags struct {
 	Keyfile        string             `goptions:"-i, --identity-file, description='ssh auth file'"`
 	Cmdfile        []string           `goptions:"-c, --command-file, description='CMD_FILE, Command file'"`
 	Tmpdir         string             `goptions:"-t, --tmp-directory, description='TMP_DIRECTORY, Specify tmp directory'"`
-	Data           string             `goptions:"-d, --data, description='the name would be replace according name=value pair in command or command file. The name format in command should be {{ .name }}'"`
+	Data           []string           `goptions:"-d, --data, description='the name would be replace according name=value pair in command or command file. The name format in command should be {{ .name }}'"`
 	Arguments      string             `goptions:"--exec, description='how to exec script in remote, use {} stands for scriptname'"`
 	Parallel       bool               `goptions:"-r, --rapid, description='Parallel execution'"`
 	ParallelDegree int                `goptions:"--parallel-degree, description='Parallel degree, default is the size of hosts'"`
