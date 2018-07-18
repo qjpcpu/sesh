@@ -199,8 +199,8 @@ func ScpRun(config TaskArgs, host_arr []string) error {
 			cmdstr := fmt.Sprintf(`rsync -azh %s %s %s@%s:%s`, remote_shell, src, user, host, dest)
 			cmd := exec.Command("/bin/bash", "-c", cmdstr)
 			fmt.Fprintf(os.Stderr, "Start sync to  %s......\n", host)
-			if err := cmd.Run(); err != nil {
-				fmt.Fprintf(os.Stderr, "Sync to %s:%s fail:%v\n", host, dest, err)
+			if res, err := cmd.CombinedOutput(); err != nil {
+				fmt.Fprintf(os.Stderr, "Sync to %s:%s fail:%v\n%s\n", host, dest, err, string(res))
 			} else {
 				fmt.Fprintf(os.Stderr, "Sync to %s:%s OK\n", host, dest)
 			}
