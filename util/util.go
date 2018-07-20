@@ -200,9 +200,9 @@ func ScpRun(config TaskArgs, host_arr []string) error {
 			cmd := exec.Command("/bin/bash", "-c", cmdstr)
 			fmt.Fprintf(os.Stderr, "Start sync to  %s......\n", host)
 			if res, err := cmd.CombinedOutput(); err != nil {
-				fmt.Fprintf(os.Stderr, "Sync to %s:%s fail:%v\n%s\n", host, dest, err, string(res))
+				fmt.Fprintf(os.Stderr, "Sync %s to %s:%s fail:%v\n%s\n", src, host, dest, err, string(res))
 			} else {
-				fmt.Fprintf(os.Stderr, "Sync to %s:%s OK\n", host, dest)
+				fmt.Fprintf(os.Stderr, "Sync %s to %s:%s OK\n", src, host, dest)
 			}
 		}
 		if parallel {
