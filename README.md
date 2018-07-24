@@ -55,6 +55,8 @@ And, if the user of remote host is same as current user, we can just drop `-u` f
 
 	sesh -f host-file 'echo hello'
 
+> build key auth quickly: sesh -f host-file -u user -c @auth.cmd
+
 #### Timeout
 
 The default connection timeout is 5 seconds, it can be changed by `--timeout`:

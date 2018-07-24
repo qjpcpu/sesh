@@ -122,7 +122,11 @@ func main() {
 		return
 	}
 	if options.Cmdfile == string(util.AuthCmdFile) {
-		if c, err := util.AuthCmdFile.Get(); err == nil {
+		pubkey_file := os.Getenv("HOME") + "/.ssh/id_rsa.pub"
+		if options.Keyfile != "" {
+			pubkey_file = options.Keyfile + ".pub"
+		}
+		if c, err := util.AuthCmdFile.Get(pubkey_file); err == nil {
 			options.Cmd = []string{c}
 			options.Cmdfile = ""
 		}

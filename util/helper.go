@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
-	"os"
 	"strings"
 	"time"
 )
@@ -12,7 +11,7 @@ import (
 type BuildinCmd string
 
 const (
-	AuthCmdFile BuildinCmd = "$auth.cmd"
+	AuthCmdFile BuildinCmd = "@auth.cmd"
 )
 
 func format_cmd(cmd, args string) string {
@@ -38,8 +37,8 @@ func format_cmd(cmd, args string) string {
 	}
 }
 
-func (bc BuildinCmd) Get() (string, error) {
-	d, err := ioutil.ReadFile(os.Getenv("HOME") + "/.ssh/id_rsa.pub")
+func (bc BuildinCmd) Get(pubkey_file string) (string, error) {
+	d, err := ioutil.ReadFile(pubkey_file)
 	if err != nil {
 		return "", err
 	}
