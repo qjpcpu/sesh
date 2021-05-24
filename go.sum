@@ -1,0 +1,8 @@
+github.com/hoisie/mustache v0.0.0-20160804235033-6375acf62c69 h1:umaj0TCQ9lWUUKy2DxAhEzPbwd0jnxiw1EI2z3FiILM=
+github.com/hoisie/mustache v0.0.0-20160804235033-6375acf62c69/go.mod h1:zdLK9ilQRSMjSeLKoZ4BqUfBT7jswTGF8zRlKEsiRXA=
+github.com/mattn/go-runewidth v0.0.3 h1:a+kO+98RDGEfo6asOGMmpodZq4FNtnGP54yps8BzLR4=
+github.com/mattn/go-runewidth v0.0.3/go.mod h1:LwmH8dsx7+W8Uxz3IHJYH5QSwggIsqBzpuz5H//U1FU=
+github.com/nsf/termbox-go v0.0.0-20160718140619-0723e7c3d0a3 h1:ZO9HxvrKpqVSJnbA8Se9OOQs2m1+DsmerXQdkL0AW7A=
+github.com/nsf/termbox-go v0.0.0-20160718140619-0723e7c3d0a3/go.mod h1:IuKpRQcYE1Tfu+oAQqaLisqDeXgjyyltCfsaoYN18NQ=
+github.com/voxelbrain/goptions v0.0.0-20151102231003-26cb8b046923 h1:9wj8kG7h9BFfuAGtEgtShrnTNY27UI/v6/RGEpue+LA=
+github.com/voxelbrain/goptions v0.0.0-20151102231003-26cb8b046923/go.mod h1:DGCIhurYgnLz8J9ga1fMV/fbLDyUvTyrWXVWUIyJon4=

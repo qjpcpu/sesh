@@ -3,16 +3,15 @@ package batch
 import (
 	"bufio"
 	"fmt"
-	"github.com/qjpcpu/sesh/golang.org/x/crypto/ssh"
-	"github.com/qjpcpu/sesh/golang.org/x/crypto/ssh/agent"
 	"io"
 	"io/ioutil"
-	"net"
 	"os"
 	"os/exec"
 	"os/signal"
 	"strings"
 	"sync"
+
+	"github.com/qjpcpu/sesh/golang.org/x/crypto/ssh"
 )
 
 type Task struct {
@@ -64,20 +63,20 @@ func (task *Task) Work() {
 	if task.WaitGroup != nil {
 		defer task.Done()
 	}
-	ssh_agent := func() ssh.AuthMethod {
-		if sshAgent, err := net.Dial("unix", os.Getenv("SSH_AUTH_SOCK")); err == nil {
-			return ssh.PublicKeysCallback(agent.NewClient(sshAgent).Signers)
-		}
-		return nil
-	}
+	// ssh_agent := func() ssh.AuthMethod {
+	// 	if sshAgent, err := net.Dial("unix", os.Getenv("SSH_AUTH_SOCK")); err == nil {
+	// 		return ssh.PublicKeysCallback(agent.NewClient(sshAgent).Signers)
+	// 	}
+	// 	return nil
+	// }
 	auths := []ssh.AuthMethod{
 		ssh.Password(task.Password),
 	}
-	if os.Getenv("SSH_AUTH_SOCK") != "" {
-		if sagt := ssh_agent(); sagt != nil {
-			auths = append(auths, ssh_agent())
-		}
-	}
+	// if os.Getenv("SSH_AUTH_SOCK") != "" {
+	// 	if sagt := ssh_agent(); sagt != nil {
+	// 				auths = append(auths, ssh_agent())
+	// 	}
+	// }
 	if task.Keyfile != "" {
 		if key, err := getkey(task.Keyfile); err == nil {
 			auths = append(auths, ssh.PublicKeys(key))
@@ -118,20 +117,20 @@ func (task *Task) Work() {
 }
 
 func (task *Task) Login() {
-	ssh_agent := func() ssh.AuthMethod {
-		if sshAgent, err := net.Dial("unix", os.Getenv("SSH_AUTH_SOCK")); err == nil {
-			return ssh.PublicKeysCallback(agent.NewClient(sshAgent).Signers)
-		}
-		return nil
-	}
+	// ssh_agent := func() ssh.AuthMethod {
+	// 	if sshAgent, err := net.Dial("unix", os.Getenv("SSH_AUTH_SOCK")); err == nil {
+	// 		return ssh.PublicKeysCallback(agent.NewClient(sshAgent).Signers)
+	// 	}
+	// 	return nil
+	// }
 	auths := []ssh.AuthMethod{
 		ssh.Password(task.Password),
 	}
-	if os.Getenv("SSH_AUTH_SOCK") != "" {
-		if sagt := ssh_agent(); sagt != nil {
-			auths = append(auths, ssh_agent())
-		}
-	}
+	// if os.Getenv("SSH_AUTH_SOCK") != "" {
+	// 	if sagt := ssh_agent(); sagt != nil {
+	// 		auths = append(auths, ssh_agent())
+	// 	}
+	// }
 	if task.Keyfile != "" {
 		if key, err := getkey(task.Keyfile); err == nil {
 			auths = append(auths, ssh.PublicKeys(key))
