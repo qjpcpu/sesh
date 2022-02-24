@@ -42,11 +42,17 @@ func (bc BuildinCmd) Get(pubkey_file string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	key := strings.TrimSpace(string(d))
+	name := key
+	if arr := strings.SplitN(key, " ", 3); len(arr) >= 3 {
+		name = arr[2]
+	}
+
 	cmdstr := fmt.Sprintf(`
 [ ! -e ~/.ssh ] && mkdir -p ~/.ssh && chmod 700 ~/.ssh
 [ ! -e ~/.ssh/authorized_keys ] && touch ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys
 grep '%s' ~/.ssh/authorized_keys >/dev/null || echo '%s' >> ~/.ssh/authorized_keys
 echo 'add public key to ~/.ssh/authorized_keys OK'
-`, string(d), string(d))
+`, name, key)
 	return cmdstr, nil
 }

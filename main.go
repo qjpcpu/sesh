@@ -19,7 +19,7 @@ type SeshFlags struct {
 	Password       string             `goptions:"-p, --password, description='PASSWORD'"`
 	Port           string             `goptions:"--port, description='PORT'"`
 	Keyfile        string             `goptions:"-i, --identity-file, description='ssh auth file'"`
-	Cmdfile        string             `goptions:"-c, --command-file, description='CMD_FILE, Command file'"`
+	Cmdfile        string             `goptions:"-c, --command-file, description='CMD_FILE, Command file, @auth.cmd'"`
 	Tmpdir         string             `goptions:"-t, --tmp-directory, description='TMP_DIRECTORY, Specify tmp directory'"`
 	Data           []string           `goptions:"-d, --data, description='the name would be replace according -d name=value pair in command or command file. The name format in command should be {{ name }}'"`
 	Arguments      string             `goptions:"--exec, description='how to exec script in remote, use {} stands for scriptname'"`
