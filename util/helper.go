@@ -17,6 +17,7 @@ const (
 func format_cmd(cmd, args string) string {
 	// dump command to file then execute the script file if args is not empty
 	// the args should look like 'bash {} arg1 arg2' or '{} arg1 arg2', '{}' is script filename
+	eofStr := fmt.Sprintf("E%vOF", time.Now().UnixMilli())
 	if args != "" {
 		tmp := fmt.Sprintf("/tmp/sesh-%v", time.Now().Nanosecond())
 		if strings.Contains(args, "{}") {
@@ -24,13 +25,13 @@ func format_cmd(cmd, args string) string {
 		} else {
 			args = fmt.Sprintf("%s %s", tmp, args)
 		}
-		return fmt.Sprintf("(cat > %s  <<\\EOF\n%s\nEOF\n) && chmod +x %s && (%s) ; rm -f %s", tmp, cmd, tmp, args, tmp)
+		return fmt.Sprintf("(cat > %s  <<\\%s\n%s\n%s\n) && chmod +x %s && (%s) ; rm -f %s", tmp, eofStr, cmd, eofStr, tmp, args, tmp)
 	} else {
 		if strings.HasPrefix(cmd, "#!") {
 			buf := bytes.NewBufferString(cmd)
 			exe, _ := buf.ReadString('\n')
 			exe = strings.TrimRight(exe[2:], "\n")
-			return "(cat <<\\EOF\n" + cmd + "\nEOF\n) |" + exe
+			return "(cat <<\\" + eofStr + "\n" + cmd + "\n" + eofStr + "\n) |" + exe
 		} else {
 			return cmd
 		}
